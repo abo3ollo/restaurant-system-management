@@ -1,7 +1,15 @@
+import CashierScreen from "./(pages)/cashier/page";
+import HomePage from "./(pages)/home/page";
 
 
 export default function Home() {
   return (
-    <h1 className="text-2xl">اهلا بكم في المطعم</h1>
+    <div className="flex flex-col min-h-screen">
+      <main className="grow">
+        {/* <CashierScreen/> */}
+        <HomePage/>
+      </main>
+      
+    </div>
   );
 }

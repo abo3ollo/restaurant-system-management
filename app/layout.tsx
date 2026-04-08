@@ -20,10 +20,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="en" >
       <body className={`${cairo.variable} font-family-name:var(--font-cairo) antialiased`}>
-        <Navbar/>
-
+        {/* <Navbar/> */}
         {children}
       </body>
     </html>
