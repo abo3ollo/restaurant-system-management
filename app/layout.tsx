@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
 import Navbar from "./_components/Navbar";
+import ConvexClerkProvider from "./_components/ConvexClerkProvider";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en" >
       <body className={`${cairo.variable} font-family-name:var(--font-cairo) antialiased`}>
         {/* <Navbar/> */}
+        <ConvexClerkProvider>
         {children}
+        </ConvexClerkProvider>
       </body>
     </html>
   );

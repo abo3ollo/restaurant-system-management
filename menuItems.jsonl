@@ -1,0 +1,15 @@
+{"name": "Margherita Pizza", "price": 120, "category": "Pizza", "available": true, "image": "/images/menuItems/margherita-pizza-.jpg"}
+{"name": "Pepperoni Pizza", "price": 150, "category": "Pizza", "available": true, "image": "/images/menuItems/Pepperoni Pizza.jpeg"}
+{"name": "BBQ Chicken Pizza", "price": 170, "category": "Pizza", "available": true, "image": "/images/menuItems/bbq-chicken-pizza-feature.jpg"}
+{"name": "Classic Burger", "price": 100, "category": "Burgers", "available": true, "image": "/images/menuItems/Classic Burger.jpg"}
+{"name": "Cheese Burger", "price": 120, "category": "Burgers", "available": true, "image": "/images/menuItems/Cheese Burger.jpg"}
+{"name": "Double Burger", "price": 150, "category": "Burgers", "available": true, "image": "/images/menuItems/Double Burger.jpg"}
+{"name": "Orange Drinks", "price": 40, "category": "Drinks", "available": true, "image": "/images/menuItems/Orange Drinks.jpg"}
+{"name": "Mango Drinks", "price": 50, "category": "Drinks", "available": true, "image": "/images/menuItems/Mango Drinks.jpg"}
+{"name": "Strawberry Drinks", "price": 55, "category": "Drinks", "available": true, "image": "/images/menuItems/Strawberry Drinks.jfif"}
+{"name": "Tiramisu", "price": 60, "category": "Desserts", "available": true, "image": "/images/menuItems/Tiramisu.jfif"}
+{"name": "Cheesecake", "price": 55, "category": "Desserts", "available": true, "image": "/images/menuItems/Cheesecake.jfif"}
+{"name": "Chocolate Cake", "price": 65, "category": "Desserts", "available": true, "image": "/images/menuItems/Chocolate Cake.jfif"}
+{"name": "Fries", "price": 30, "category": "Extras", "available": true, "image": "/images/menuItems/Fries.jfif"}
+{"name": "Cheese Fries", "price": 45, "category": "Extras", "available": true, "image": "/images/menuItems/Cheese Fries.jfif"}
+{"name": "Onion Rings", "price": 35, "category": "Extras", "available": true, "image": "/images/menuItems/Onion Rings.jfif"}
