@@ -9,7 +9,7 @@ import {
     LogOut, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import MenuItems from "@/app/_components/menuItems";
+import MenuItems from "@/app/_components/AdminPage/menuItems";
 import Dashboard from "@/app/_components/AdminPage/Dashboard";
 
 const NAV = [

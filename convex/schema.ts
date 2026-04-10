@@ -33,6 +33,7 @@ export default defineSchema({
         category: v.string(),
         image: v.string(),
         available: v.boolean(),
+        description: v.string(),
     }).index("by_category", ["category"]),
 
     orders: defineTable({

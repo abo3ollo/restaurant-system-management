@@ -9,6 +9,8 @@
  */
 
 import type * as menuItems from "../menuItems.js";
+import type * as orders from "../orders.js";
+import type * as tables from "../tables.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +20,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   menuItems: typeof menuItems;
+  orders: typeof orders;
+  tables: typeof tables;
 }>;
 
 /**

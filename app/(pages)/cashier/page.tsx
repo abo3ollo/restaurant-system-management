@@ -1,15 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-    LayoutDashboard,
-    UtensilsCrossed,
-    ClipboardList,
-    BookOpen,
-    BarChart2,
-    Users,
-    Settings,
-    HelpCircle,
     Bell,
     Search,
     ShoppingBasket,
@@ -18,13 +10,15 @@ import {
     CreditCard,
     CheckCircle,
     TrendingUp,
-    ChevronRight,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useCreateOrder } from "@/hooks/useCreateOrder";
+
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -39,78 +33,11 @@ const TABLES = [
         status: "active",
         dot: "bg-red-400",
     },
-    {
-        id: "Table 08",
-        guests: null,
-        time: "Empty • Available",
-        amount: null,
-        status: "available",
-        dot: "bg-green-400",
-    },
-    {
-        id: "Table 15",
-        guests: 2,
-        time: "12m seated",
-        amount: null,
-        status: "seated",
-        dot: "bg-red-400",
-    },
-    {
-        id: "Table 03",
-        guests: null,
-        time: "Reserved • 19:30",
-        amount: null,
-        status: "reserved",
-        dot: "bg-orange-400",
-    },
 ];
 
-const MENU_TABS = ["Starters", "Main Course", "Pizza", "Drinks", "Desserts"];
+const MENU_TABS = ["Pizza", "Drinks", "Desserts"];
 
-const MENU_ITEMS = [
-    {
-        name: "Avocado Salmon Bowl",
-        price: "$24",
-        desc: "Fresh norwegian salmon, hass avocado, jasmine rice",
-        tag: null,
-        img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&q=80",
-    },
-    {
-        name: "Napolitan Margarita",
-        price: "$18",
-        desc: "San Marzano tomatoes, buffalo mozzarella, fresh basil",
-        tag: null,
-        img: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=300&q=80",
-    },
-    {
-        name: "Truffle Dumplings",
-        price: "$22",
-        desc: "Handmade dumplings with black truffle and porcini",
-        tag: null,
-        img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=300&q=80",
-    },
-    {
-        name: "Greek Harvest Salad",
-        price: "$14",
-        desc: "Heirloom tomatoes, feta, olives, oregano",
-        tag: null,
-        img: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&q=80",
-    },
-    {
-        name: "Signature Old Fashioned",
-        price: "$16",
-        desc: "Small batch bourbon, house bitters, orange oils",
-        tag: "TRENDING",
-        img: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=300&q=80",
-    },
-    {
-        name: "Molten Chocolate Cake",
-        price: "$12",
-        desc: "70% dark chocolate cacao, bourbon vanilla ice cream",
-        tag: null,
-        img: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=300&q=80",
-    },
-];
+
 
 const ORDER_ITEMS = [
     {
@@ -130,12 +57,37 @@ const ORDER_ITEMS = [
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 
 export default function CashierScreen() {
-    const [activeTab, setActiveTab] = useState("Starters");
-    const [activeTable, setActiveTable] = useState("Table 12");
-    const [quantities, setQuantities] = useState<Record<string, number>>({
-        "Greek Harvest Salad": 1,
-        "Truffle Dumplings": 2,
-    });
+    const [activeTable, setActiveTable] = useState<string | null>(null);
+    const [quantities, setQuantities] = useState<Record<string, number>>({});
+    
+    
+    // 1. Add "All" as default state
+    const [activeTab, setActiveTab] = useState("All");
+    
+    const data = useQuery(api.menuItems.getMenu);
+    console.log(data);
+    // 2. Filter items
+    const filteredItems = activeTab === "All"
+        ? data?.items
+        : data?.items.filter((item) => item.category === activeTab);
+
+    const tables = useQuery(api.tables.getTables);
+
+    // Set activeTable to first table when tables load
+    useEffect(() => {
+        if (tables && tables.length > 0 && !activeTable) {
+            setActiveTable(tables[0]._id);
+        }
+    }, [tables, activeTable]);
+
+
+    // const { handleConfirm } = useCreateOrder();
+    // console.log(handleConfirm);
+
+
+
+
+
 
     const adjust = (name: string, delta: number) => {
         setQuantities((prev) => ({
@@ -143,6 +95,13 @@ export default function CashierScreen() {
             [name]: Math.max(0, (prev[name] ?? 0) + delta),
         }));
     };
+
+    // Calculate table statistics
+    const freeTablesCount = tables?.filter(t => t.status === "available").length ?? 0;
+    const busyTablesCount = tables?.filter(t => t.status === "occupied").length ?? 0;
+
+    // Get current table name
+    const currentTableName = tables?.find(t => t._id === activeTable)?.name ?? activeTable ?? "Select a table";
 
     const subtotal = ORDER_ITEMS.reduce(
         (sum, item) => sum + item.price * (quantities[item.name] ?? item.qty),
@@ -158,7 +117,7 @@ export default function CashierScreen() {
             style={{ fontFamily: "'DM Sans', 'Inter', sans-serif" }}
         >
             {/* ── SIDEBAR ── */}
-            
+
 
             {/* ── TABLES PANEL ── */}
             <div className="w-60 shrink-0 bg-white border-r border-neutral-100 flex flex-col py-6 px-4">
@@ -172,47 +131,61 @@ export default function CashierScreen() {
                 </div>
 
                 <div className="flex flex-col gap-3 flex-1">
-                    {TABLES.map((table) => (
-                        <button
-                            key={table.id}
-                            onClick={() => setActiveTable(table.id)}
-                            className={cn(
-                                "text-left rounded-2xl p-4 border transition-all",
-                                activeTable === table.id
-                                    ? "border-indigo-300 bg-indigo-50 shadow-sm"
-                                    : "border-neutral-100 bg-white hover:border-neutral-200"
-                            )}
-                        >
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-neutral-800">
-                                    {table.id}
-                                </span>
-                                <span className={cn("w-2 h-2 rounded-full", table.dot)} />
-                            </div>
-                            <p className="text-xs text-neutral-400 mt-0.5">
-                                {table.guests
-                                    ? `${table.guests} Guests • ${table.time}`
-                                    : table.time}
-                            </p>
-                            {table.amount && (
-                                <p className="text-base font-bold text-indigo-600 mt-1">
-                                    {table.amount}
+                    {!tables ? (
+                        <div className="flex items-center justify-center h-64 text-neutral-400">
+                            <p className="text-sm">Loading tables...</p>
+                        </div>
+                    ) : tables.length === 0 ? (
+                        <div className="flex items-center justify-center h-64 text-neutral-400">
+                            <p className="text-sm">No tables available</p>
+                        </div>
+                    ) : (
+                        tables.map((table) => (
+                            <button
+                                key={table._id}
+                                onClick={() => setActiveTable(table._id)}
+                                className={cn(
+                                    "text-left rounded-2xl p-4 border transition-all",
+                                    activeTable === table._id
+                                        ? "border-indigo-300 bg-indigo-50 shadow-sm"
+                                        : "border-neutral-100 bg-white hover:border-neutral-200"
+                                )}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-bold text-neutral-800">
+                                        {table.name}
+                                    </span>
+                                    <span className={cn("w-2 h-2 rounded-full", table.status === "occupied" ? "bg-red-500" : "bg-green-500")} />
+                                </div>
+                                <p className="text-xs text-neutral-400 mt-0.5">
+                                    {table.capacity
+                                        ? `${table.capacity} Guests`
+                                        : table.status === "available"
+                                            ? "Available"
+                                            : table.status === "occupied"
+                                                ? "Occupied"
+                                                : "Reserved"}
                                 </p>
-                            )}
-                        </button>
-                    ))}
+                                {/* {table.amount && (
+                                    <p className="text-base font-bold text-indigo-600 mt-1">
+                                        {table.amount}
+                                    </p>
+                                )} */}
+                            </button>
+                        ))
+                    )}
                 </div>
 
                 {/* Summary tiles */}
                 <div className="grid grid-cols-2 gap-3 mt-4">
                     <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50 flex flex-col items-center justify-center py-4">
-                        <span className="text-2xl font-black text-green-500">10</span>
+                        <span className="text-2xl font-black text-green-500">{freeTablesCount}</span>
                         <span className="text-[10px] tracking-widest font-semibold text-green-400 uppercase mt-0.5">
                             Free
                         </span>
                     </div>
                     <div className="rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 flex flex-col items-center justify-center py-4">
-                        <span className="text-2xl font-black text-rose-400">04</span>
+                        <span className="text-2xl font-black text-rose-400">{busyTablesCount}</span>
                         <span className="text-[10px] tracking-widest font-semibold text-rose-300 uppercase mt-0.5">
                             Busy
                         </span>
@@ -223,7 +196,7 @@ export default function CashierScreen() {
             {/* ── MENU CENTER ── */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-6 gap-4 shrink-0">
+                {/* <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-6 gap-4 shrink-0">
                     <div className="flex gap-6 flex-1">
                         {["Main Floor", "Kitchen", "Bar"].map((loc) => (
                             <button
@@ -260,22 +233,36 @@ export default function CashierScreen() {
                             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
                         </button>
                     </div>
-                </header>
+                </header> */}
 
                 {/* Menu tabs */}
+                {/* Tabs */}
                 <div className="flex gap-6 px-6 py-4 bg-white border-b border-neutral-100 shrink-0">
-                    {MENU_TABS.map((tab) => (
+                    {/* All tab */}
+                    <button
+                        onClick={() => setActiveTab("All")}
+                        className={cn(
+                            "text-sm font-semibold pb-1 transition-all",
+                            activeTab === "All"
+                                ? "text-neutral-900 border-b-2 border-neutral-900"
+                                : "text-neutral-400 hover:text-neutral-700"
+                        )}
+                    >
+                        All
+                    </button>
+
+                    {data?.categories.map((cat) => (
                         <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
+                            key={cat._id}
+                            onClick={() => setActiveTab(cat.name)}
                             className={cn(
                                 "text-sm font-semibold pb-1 transition-all",
-                                activeTab === tab
+                                activeTab === cat.name
                                     ? "text-neutral-900 border-b-2 border-neutral-900"
                                     : "text-neutral-400 hover:text-neutral-700"
                             )}
                         >
-                            {tab}
+                            {cat.name}
                         </button>
                     ))}
                 </div>
@@ -283,23 +270,21 @@ export default function CashierScreen() {
                 {/* Menu grid */}
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="grid grid-cols-3 gap-4">
-                        {MENU_ITEMS.map((item) => (
+                        {filteredItems?.map((item) => (
                             <div
-                                key={item.name}
+                                key={item._id}  /* ← use _id not name */
                                 className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:border-indigo-200 hover:shadow-md transition-all cursor-pointer group"
                             >
                                 <div className="relative h-36 overflow-hidden">
                                     <img
-                                        src={item.img}
+                                        src={item.image}
                                         alt={item.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     />
-                                    {item.tag && (
-                                        <div className="absolute top-2 left-2 bg-neutral-900 text-white text-[9px] font-bold tracking-widest px-2 py-1 rounded-lg flex items-center gap-1">
-                                            <TrendingUp size={9} />
-                                            {item.tag}
-                                        </div>
-                                    )}
+                                    <div className="absolute top-2 left-2 bg-neutral-900 text-white text-[9px] font-bold tracking-widest px-2 py-1 rounded-lg flex items-center gap-1">
+                                        <TrendingUp size={9} />
+                                        {item.category}  {/* ← use categoryName */}
+                                    </div>
                                 </div>
                                 <div className="p-3">
                                     <div className="flex items-start justify-between gap-1">
@@ -307,11 +292,11 @@ export default function CashierScreen() {
                                             {item.name}
                                         </h3>
                                         <span className="text-sm font-black text-indigo-600 shrink-0">
-                                            {item.price}
+                                            {item.price}$
                                         </span>
                                     </div>
                                     <p className="text-[11px] text-neutral-400 mt-1 leading-relaxed line-clamp-2">
-                                        {item.desc}
+                                        {item.description}
                                     </p>
                                 </div>
                             </div>
@@ -341,7 +326,7 @@ export default function CashierScreen() {
                         <p className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider">
                             Current Table
                         </p>
-                        <p className="text-sm font-black text-neutral-800">{activeTable}</p>
+                        <p className="text-sm font-black text-neutral-800">{currentTableName}</p>
                     </div>
                 </div>
 
