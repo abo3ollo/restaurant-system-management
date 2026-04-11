@@ -283,7 +283,7 @@ export default function CashierScreen() {
                                     />
                                     <div className="absolute top-2 left-2 bg-neutral-900 text-white text-[9px] font-bold tracking-widest px-2 py-1 rounded-lg flex items-center gap-1">
                                         <TrendingUp size={9} />
-                                        {categoryMap.get(item.categoryId)}
+                                        {item.category || categoryMap.get(item.categoryId)}
                                     </div>
                                 </div>
                                 <div className="p-3">

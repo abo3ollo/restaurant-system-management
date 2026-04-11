@@ -26,13 +26,19 @@ export const addMenuItem = mutation({
     args: {
         name: v.string(),
         price: v.number(),
-        categoryId: v.id("categories"),  // ← rename to categoryId
-        image:v.string(),
+        categoryId: v.id("categories"),
+        image: v.string(),
         description: v.string(),
         available: v.boolean(),
     },
     handler: async (ctx, args) => {
-        return await ctx.db.insert("menuItems", args);
+        // Fetch the category name
+        const category = await ctx.db.get(args.categoryId);
+        
+        return await ctx.db.insert("menuItems", {
+            ...args,
+            category: category?.name || "",
+        });
     },
 });
 

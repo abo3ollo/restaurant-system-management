@@ -88,7 +88,7 @@ export default function MenuItems() {
                         <div className="p-4">
                             <h3 className="font-bold text-gray-900 text-lg mb-1">{item.name}</h3>
                             <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                {categoryMap.get(item.categoryId)}
+                                {item.category || categoryMap.get(item.categoryId)}
                             </p>
 
                             {/* Price */}
