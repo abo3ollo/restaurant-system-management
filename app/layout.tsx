@@ -3,6 +3,7 @@ import { Cairo } from "next/font/google";
 import "./globals.css";
 import Navbar from "./_components/Navbar";
 import ConvexClerkProvider from "./_components/ConvexClerkProvider";
+import { Toaster } from "sonner";
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -27,6 +28,7 @@ export default function RootLayout({
         <ConvexClerkProvider>
         {children}
         </ConvexClerkProvider>
+        <Toaster />
       </body>
     </html>
   );

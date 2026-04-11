@@ -1,4 +1,5 @@
-import { query } from "./_generated/server";
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
 
 export const get = query({
     args: {},
@@ -19,3 +20,19 @@ export const getMenu = query({
     };
   },
 })
+
+// convex/menuItems.ts
+export const addMenuItem = mutation({
+    args: {
+        name: v.string(),
+        price: v.number(),
+        categoryId: v.id("categories"),  // ← rename to categoryId
+        image:v.string(),
+        description: v.string(),
+        available: v.boolean(),
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db.insert("menuItems", args);
+    },
+});
+

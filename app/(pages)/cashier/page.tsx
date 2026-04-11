@@ -59,17 +59,17 @@ const ORDER_ITEMS = [
 export default function CashierScreen() {
     const [activeTable, setActiveTable] = useState<string | null>(null);
     const [quantities, setQuantities] = useState<Record<string, number>>({});
-    
-    
-    // 1. Add "All" as default state
-    const [activeTab, setActiveTab] = useState("All");
+    const [activeTab, setActiveTab] = useState<string>("All");
     
     const data = useQuery(api.menuItems.getMenu);
-    console.log(data);
-    // 2. Filter items
+    
+    // Create a mapping of categoryId to category name
+    const categoryMap = new Map((data?.categories || []).map((cat: any) => [cat._id, cat.name]));
+    
+    // Filter items by category
     const filteredItems = activeTab === "All"
         ? data?.items
-        : data?.items.filter((item) => item.category === activeTab);
+        : data?.items.filter((item) => item.categoryId === activeTab);
 
     const tables = useQuery(api.tables.getTables);
 
@@ -254,10 +254,10 @@ export default function CashierScreen() {
                     {data?.categories.map((cat) => (
                         <button
                             key={cat._id}
-                            onClick={() => setActiveTab(cat.name)}
+                            onClick={() => setActiveTab(cat._id)}
                             className={cn(
                                 "text-sm font-semibold pb-1 transition-all",
-                                activeTab === cat.name
+                                activeTab === cat._id
                                     ? "text-neutral-900 border-b-2 border-neutral-900"
                                     : "text-neutral-400 hover:text-neutral-700"
                             )}
@@ -283,7 +283,7 @@ export default function CashierScreen() {
                                     />
                                     <div className="absolute top-2 left-2 bg-neutral-900 text-white text-[9px] font-bold tracking-widest px-2 py-1 rounded-lg flex items-center gap-1">
                                         <TrendingUp size={9} />
-                                        {item.category}  {/* ← use categoryName */}
+                                        {categoryMap.get(item.categoryId)}
                                     </div>
                                 </div>
                                 <div className="p-3">

@@ -28,13 +28,14 @@ export default defineSchema({
     }),
 
     menuItems: defineTable({
-        name: v.string(),
-        price: v.number(),
-        category: v.string(),
-        image: v.string(),
-        available: v.boolean(),
-        description: v.string(),
-    }).index("by_category", ["category"]),
+    name: v.string(),
+    price: v.number(),
+    categoryId: v.optional(v.id("categories")),  // ← optional
+    category: v.optional(v.string()),             // ← keep old field too
+    image: v.optional(v.string()),
+    description: v.optional(v.string()),
+    available: v.boolean(),
+}),
 
     orders: defineTable({
         tableId: v.id("tables"),

@@ -4,24 +4,27 @@ import { useQuery } from 'convex/react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Edit2, Trash2 } from 'lucide-react';
+import { AddMenuItemsModal } from './AddMenuItemsModal';
 
 export default function MenuItems() {
-    const menuItems = useQuery(api.menuItems.get);
-    console.log(menuItems);
-    
+    const menuData = useQuery(api.menuItems.getMenu);
     const [selectedCategory, setSelectedCategory] = useState("All");
 
-    if (!menuItems) {
+    if (!menuData) {
         return <div className="p-8">Loading...</div>;
     }
 
+    const { items: menuItems = [], categories = [] } = menuData;
+    // Create a mapping of categoryId to category name
+    const categoryMap = new Map(categories.map((cat: any) => [cat._id, cat.name]));
+
     // Get unique categories
-    const categories = ["All", ...new Set(menuItems.map((item) => item.category))];
+    const categoryList = ["All", ...new Set(menuItems.map((item: any) => item.categoryId))];
 
     // Filter items by category
     const filteredItems = selectedCategory === "All" 
         ? menuItems 
-        : menuItems.filter((item) => item.category === selectedCategory);
+        : menuItems.filter((item: any) => item.categoryId === selectedCategory);
 
     return (
         <div className="p-8 bg-gray-50 min-h-screen">
@@ -30,25 +33,23 @@ export default function MenuItems() {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Menu Management</h1>
                     <p className="text-gray-600">Refine your culinary catalog and real-time availability.</p>
-                </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2">
-                    + Add Menu Item
-                </button>
+                </div> 
+                <AddMenuItemsModal />
             </div>
 
             {/* Category Filters */}
             <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-                {categories.map((category) => (
+                {categoryList.map((category) => (
                     <button
                         key={category}
-                        onClick={() => setSelectedCategory(category)}
+                        onClick={() => setSelectedCategory(category || "All")}
                         className={`px-6 py-2 rounded-full font-semibold whitespace-nowrap transition-colors ${
                             selectedCategory === category
                                 ? "bg-blue-900 text-white"
                                 : "bg-white text-gray-700 border border-gray-300 hover:border-gray-400"
                         }`}
                     >
-                        {category}
+                        {category === "All" ? "All" : categoryMap.get(category)}
                     </button>
                 ))}
             </div>
@@ -87,7 +88,7 @@ export default function MenuItems() {
                         <div className="p-4">
                             <h3 className="font-bold text-gray-900 text-lg mb-1">{item.name}</h3>
                             <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                {item.category}
+                                {categoryMap.get(item.categoryId)}
                             </p>
 
                             {/* Price */}
