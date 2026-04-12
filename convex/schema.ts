@@ -28,14 +28,15 @@ export default defineSchema({
     }),
 
     menuItems: defineTable({
-    name: v.string(),
-    price: v.number(),
-    categoryId: v.optional(v.id("categories")),  // ← optional
-    category: v.optional(v.string()),             // ← keep old field too
-    image: v.optional(v.string()),
-    description: v.optional(v.string()),
-    available: v.boolean(),
-}),
+        name: v.string(),
+        price: v.number(),
+        categoryId: v.optional(v.id("categories")),  // ← optional
+        category: v.optional(v.string()),             // ← keep old field too
+        image: v.optional(v.string()),
+        description: v.optional(v.string()),
+        available: v.boolean(),
+        isDeleted: v.optional(v.boolean()),
+    }),
 
     orders: defineTable({
         tableId: v.id("tables"),

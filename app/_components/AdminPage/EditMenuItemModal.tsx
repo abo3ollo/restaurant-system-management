@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -15,7 +15,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,30 +43,51 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface EditMenuItemModalProps {
+    item: any;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
 // ── Component ────────────────────────────────────────────
-export function AddMenuItemsModal() {
+export function EditMenuItemModal({ item, open, onOpenChange }: EditMenuItemModalProps) {
     const categories = useQuery(api.menuItems.getMenu);
-    const addItem = useMutation(api.menuItems.addMenuItem);
-    const [open, setOpen] = useState(false);
+    const updateItem = useMutation(api.menuItems.updateMenuItem);
+    const [existingImage, setExistingImage] = useState<string>("");
 
     const form = useForm<FormValues>({
         defaultValues: {
-            name: "",
-            price: "",
-            category: "",
+            name: item?.name || "",
+            price: item?.price?.toString() || "",
+            category: item?.categoryId || "",
             image: undefined,
-            description: "",
-            available: true,
+            description: item?.description || "",
+            available: item?.available ?? true,
         },
         resolver: zodResolver(formSchema),
     });
 
+    // Update form values when item changes
+    useEffect(() => {
+        if (item && open) {
+            setExistingImage(item.image || "");
+            form.reset({
+                name: item.name || "",
+                price: item.price?.toString() || "",
+                category: item.categoryId || "",
+                image: undefined,
+                description: item.description || "",
+                available: item.available ?? true,
+            });
+        }
+    }, [item, open]);
+
     const onSubmit = async (values: FormValues) => {
         try {
-            let imageUrl = "";
+            let imageUrl = existingImage;
 
             if (values.image && typeof values.image !== "string") {
-                // Convert file to base64 or upload to storage
+                // Convert file to base64
                 const reader = new FileReader();
                 imageUrl = await new Promise((resolve, reject) => {
                     reader.onload = () => resolve(reader.result as string);
@@ -76,7 +96,8 @@ export function AddMenuItemsModal() {
                 });
             }
 
-            await addItem({
+            await updateItem({
+                id: item._id,
                 name: values.name,
                 price: parseFloat(values.price),
                 categoryId: values.category as Id<"categories">,
@@ -84,29 +105,25 @@ export function AddMenuItemsModal() {
                 description: values.description,
                 available: values.available,
             });
-            toast.success("Menu item added successfully!");
+            toast.success("Menu item updated successfully!");
             form.reset();
-            setOpen(false);
+            onOpenChange(false);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to add menu item. Please try again.");
+            toast.error("Failed to update menu item. Please try again.");
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2">
-                + Add Menu Item
-            </DialogTrigger>
-
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg rounded-2xl p-8">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-neutral-900">
-                        Add New Menu Item
+                        Edit Menu Item
                     </DialogTitle>
                 </DialogHeader>
 
-                <form id="add-menu-item-form" onSubmit={form.handleSubmit(onSubmit)}>
+                <form id="edit-menu-item-form" onSubmit={form.handleSubmit(onSubmit)}>
                     <FieldGroup>
 
                         {/* Name + Price */}
@@ -214,6 +231,11 @@ export function AddMenuItemsModal() {
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel>Image</FieldLabel>
+                                    {existingImage && (
+                                        <div className="mb-2 text-sm text-neutral-600">
+                                            Current image is set
+                                        </div>
+                                    )}
                                     <Input
                                         type="file"
                                         accept="image/*"
@@ -264,20 +286,21 @@ export function AddMenuItemsModal() {
                 {/* Actions */}
                 <Field orientation="horizontal" className="justify-end mt-4">
                     <DialogClose
-                        type="button"
+
                         onClick={() => form.reset()}
                         className="rounded-full"
+
                     >
                         Cancel
 
                     </DialogClose>
                     <button
                         type="submit"
-                        form="add-menu-item-form"
+                        form="edit-menu-item-form"
                         disabled={form.formState.isSubmitting}
-                        className="p-2 text-white rounded-full bg-indigo-600 hover:bg-indigo-700"
+                        className="p-2 text-white  rounded-full bg-indigo-600 hover:bg-indigo-700"
                     >
-                        {form.formState.isSubmitting ? "Saving..." : "Save Item"}
+                        {form.formState.isSubmitting ? "Saving..." : "Update Item"}
                     </button>
                 </Field>
 

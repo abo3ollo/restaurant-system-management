@@ -8,18 +8,18 @@ export const get = query({
     },
 });
 
-
 export const getMenu = query({
-  handler: async (ctx) => {
-    const items = await ctx.db.query("menuItems").collect();
-    const categories = await ctx.db.query("categories").collect();
+    handler: async (ctx) => {
+        const allItems = await ctx.db.query("menuItems").collect();
+        const items = allItems.filter(item => !item.isDeleted);
+        const categories = await ctx.db.query("categories").collect();
 
-    return {
-      items,
-      categories,
-    };
-  },
-})
+        return {
+            items,
+            categories,
+        };
+    },
+});
 
 // convex/menuItems.ts
 export const addMenuItem = mutation({
@@ -34,7 +34,7 @@ export const addMenuItem = mutation({
     handler: async (ctx, args) => {
         // Fetch the category name
         const category = await ctx.db.get(args.categoryId);
-        
+
         return await ctx.db.insert("menuItems", {
             ...args,
             category: category?.name || "",
@@ -42,3 +42,42 @@ export const addMenuItem = mutation({
     },
 });
 
+export const updateMenuItem = mutation({
+    args: {
+        id: v.id("menuItems"),
+        name: v.string(),
+        price: v.number(),
+        description: v.string(),
+        image: v.string(),
+        categoryId: v.id("categories"),
+        available: v.boolean(),
+    },
+
+    handler: async (ctx, args) => {
+        // Fetch the category name
+        const category = await ctx.db.get(args.categoryId);
+        
+        await ctx.db.patch(args.id, {
+            name: args.name,
+            price: args.price,
+            available: args.available,
+            description: args.description,
+            image: args.image,
+            categoryId: args.categoryId,
+            category: category?.name || "",
+        });
+    },
+});
+
+
+export const deleteMenuItem = mutation({
+    args: {
+        id: v.id("menuItems"),
+    },
+
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.id, {
+            isDeleted: true,
+        });
+    },
+});

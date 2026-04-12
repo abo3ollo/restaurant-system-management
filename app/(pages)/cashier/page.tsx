@@ -66,10 +66,10 @@ export default function CashierScreen() {
     // Create a mapping of categoryId to category name
     const categoryMap = new Map((data?.categories || []).map((cat: any) => [cat._id, cat.name]));
     
-    // Filter items by category
+    // Filter items by category and availability
     const filteredItems = activeTab === "All"
-        ? data?.items
-        : data?.items.filter((item) => item.categoryId === activeTab);
+        ? data?.items?.filter((item) => item.available)
+        : data?.items?.filter((item) => item.categoryId === activeTab && item.available);
 
     const tables = useQuery(api.tables.getTables);
 
