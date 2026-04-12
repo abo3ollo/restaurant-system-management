@@ -12,60 +12,26 @@ import {
     TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useCreateOrder } from "@/hooks/useCreateOrder";
-
-
-// ─── DATA ────────────────────────────────────────────────────────────────────
+import { useCart } from "@/stores/cartStore";
 
 
 
-const TABLES = [
-    {
-        id: "Table 12",
-        guests: 4,
-        time: "45m seated",
-        amount: "$84.50",
-        status: "active",
-        dot: "bg-red-400",
-    },
-];
-
-const MENU_TABS = ["Pizza", "Drinks", "Desserts"];
-
-
-
-const ORDER_ITEMS = [
-    {
-        name: "Greek Harvest Salad",
-        note: "No onions, extra feta",
-        qty: 1,
-        price: 14,
-    },
-    {
-        name: "Truffle Dumplings",
-        note: "Add extra chili oil",
-        qty: 2,
-        price: 22,
-    },
-];
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 
 export default function CashierScreen() {
     const [activeTable, setActiveTable] = useState<string | null>(null);
-    const [quantities, setQuantities] = useState<Record<string, number>>({});
     const [activeTab, setActiveTab] = useState<string>("All");
-    
+
     const data = useQuery(api.menuItems.getMenu);
-    
+
     // Create a mapping of categoryId to category name
     const categoryMap = new Map((data?.categories || []).map((cat: any) => [cat._id, cat.name]));
-    
+
     // Filter items by category and availability
     const filteredItems = activeTab === "All"
         ? data?.items?.filter((item) => item.available)
@@ -81,30 +47,26 @@ export default function CashierScreen() {
     }, [tables, activeTable]);
 
 
-    // const { handleConfirm } = useCreateOrder();
-    // console.log(handleConfirm);
+    // At the top of your cashier component
+    const { getCart, addToCart, adjustQty, updateNote, clearCart } = useCart();
 
 
-
-
-
-
-    const adjust = (name: string, delta: number) => {
-        setQuantities((prev) => ({
-            ...prev,
-            [name]: Math.max(0, (prev[name] ?? 0) + delta),
-        }));
-    };
 
     // Calculate table statistics
-    const freeTablesCount = tables?.filter(t => t.status === "available").length ?? 0;
-    const busyTablesCount = tables?.filter(t => t.status === "occupied").length ?? 0;
+    const freeTablesCount = tables?.filter(t =>
+        t.status === "available" && getCart(t._id).length === 0
+    ).length ?? 0;
+
+    const busyTablesCount = tables?.filter(t =>
+        t.status === "occupied" || getCart(t._id).length > 0
+    ).length ?? 0;
 
     // Get current table name
     const currentTableName = tables?.find(t => t._id === activeTable)?.name ?? activeTable ?? "Select a table";
 
-    const subtotal = ORDER_ITEMS.reduce(
-        (sum, item) => sum + item.price * (quantities[item.name] ?? item.qty),
+    const cart = getCart(activeTable ?? "");
+    const subtotal = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
         0
     );
     const tax = +(subtotal * 0.08).toFixed(2);
@@ -116,7 +78,6 @@ export default function CashierScreen() {
             className="flex h-screen bg-[#F5F5F3] overflow-hidden font-sans"
             style={{ fontFamily: "'DM Sans', 'Inter', sans-serif" }}
         >
-            {/* ── SIDEBAR ── */}
 
 
             {/* ── TABLES PANEL ── */}
@@ -130,7 +91,7 @@ export default function CashierScreen() {
                     </span>
                 </div>
 
-                <div className="flex flex-col gap-3 flex-1">
+                <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0">
                     {!tables ? (
                         <div className="flex items-center justify-center h-64 text-neutral-400">
                             <p className="text-sm">Loading tables...</p>
@@ -140,39 +101,44 @@ export default function CashierScreen() {
                             <p className="text-sm">No tables available</p>
                         </div>
                     ) : (
-                        tables.map((table) => (
-                            <button
-                                key={table._id}
-                                onClick={() => setActiveTable(table._id)}
-                                className={cn(
-                                    "text-left rounded-2xl p-4 border transition-all",
-                                    activeTable === table._id
-                                        ? "border-indigo-300 bg-indigo-50 shadow-sm"
-                                        : "border-neutral-100 bg-white hover:border-neutral-200"
-                                )}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold text-neutral-800">
-                                        {table.name}
-                                    </span>
-                                    <span className={cn("w-2 h-2 rounded-full", table.status === "occupied" ? "bg-red-500" : "bg-green-500")} />
-                                </div>
-                                <p className="text-xs text-neutral-400 mt-0.5">
-                                    {table.capacity
-                                        ? `${table.capacity} Guests`
-                                        : table.status === "available"
-                                            ? "Available"
-                                            : table.status === "occupied"
-                                                ? "Occupied"
-                                                : "Reserved"}
-                                </p>
-                                {/* {table.amount && (
-                                    <p className="text-base font-bold text-indigo-600 mt-1">
-                                        {table.amount}
+                        tables.map((table) => {
+                            const tableCart = getCart(table._id);
+                            const tableTotal = tableCart.reduce(
+                                (sum, item) => sum + item.price * item.quantity, 0
+                            );
+                            const isBusy = table.status === "occupied" || tableCart.length > 0; // ← derive from cart
+
+                            return (
+                                <button
+                                    key={table._id}
+                                    onClick={() => setActiveTable(table._id)}
+                                    className={cn(
+                                        "text-left rounded-2xl p-4 border transition-all",
+                                        activeTable === table._id
+                                            ? "border-indigo-300 bg-indigo-50 shadow-sm"
+                                            : "border-neutral-100 bg-white hover:border-neutral-200"
+                                    )}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-bold text-neutral-800">
+                                            {table.name}
+                                        </span>
+                                        <span className={cn(
+                                            "w-2 h-2 rounded-full",
+                                            isBusy ? "bg-red-500" : "bg-green-500"  // ← use isBusy
+                                        )} />
+                                    </div>
+                                    <p className="text-xs text-neutral-400 mt-0.5">
+                                        {table.capacity ? `${table.capacity} Guests` : table.status}
                                     </p>
-                                )} */}
-                            </button>
-                        ))
+                                    {tableTotal > 0 && (
+                                        <p className="text-base font-bold text-indigo-600 mt-1">
+                                            ${tableTotal.toFixed(2)}
+                                        </p>
+                                    )}
+                                </button>
+                            );
+                        })
                     )}
                 </div>
 
@@ -273,6 +239,15 @@ export default function CashierScreen() {
                         {filteredItems?.map((item) => (
                             <div
                                 key={item._id}  /* ← use _id not name */
+                                onClick={() => {
+                                    if (!activeTable) return;
+                                    addToCart(activeTable, {
+                                        _id: item._id,
+                                        name: item.name,
+                                        price: item.price,
+                                        image: item.image,
+                                    });
+                                }}
                                 className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:border-indigo-200 hover:shadow-md transition-all cursor-pointer group"
                             >
                                 <div className="relative h-36 overflow-hidden">
@@ -332,39 +307,42 @@ export default function CashierScreen() {
 
                 {/* Order items */}
                 <div className="flex-1 overflow-y-auto px-5 pt-4 flex flex-col gap-4">
-                    {ORDER_ITEMS.map((item) => (
-                        <div key={item.name} className="flex flex-col gap-1.5">
-                            <div className="flex items-start justify-between gap-2">
-                                <div>
-                                    <p className="text-sm font-bold text-neutral-800">
-                                        {item.name}
-                                    </p>
-                                    <p className="text-[11px] text-neutral-400">{item.note}</p>
-                                </div>
-                                <span className="text-sm font-black text-neutral-700 shrink-0">
-                                    ${(item.price * (quantities[item.name] ?? item.qty)).toFixed(2)}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => adjust(item.name, -1)}
-                                    className="w-6 h-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-colors"
-                                >
-                                    <Minus size={11} />
-                                </button>
-                                <span className="text-sm font-bold w-5 text-center">
-                                    {quantities[item.name] ?? item.qty}
-                                </span>
-                                <button
-                                    onClick={() => adjust(item.name, 1)}
-                                    className="w-6 h-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-colors"
-                                >
-                                    <Plus size={11} />
-                                </button>
-                            </div>
-                            <Separator className="mt-1" />
+                    {getCart(activeTable ?? "").length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-neutral-300 gap-2">
+                            <ShoppingBasket size={32} />
+                            <p className="text-xs font-semibold">No items yet</p>
+                            <p className="text-[11px]">Tap a menu item to add it</p>
                         </div>
-                    ))}
+                    ) : (
+                        getCart(activeTable ?? "").map((item) => (
+                            <div key={item._id} className="flex flex-col gap-1.5">
+                                <div className="flex items-start justify-between gap-2">
+                                    <p className="text-sm font-bold text-neutral-800">{item.name}</p>
+                                    <span className="text-sm font-black text-neutral-700 shrink-0">
+                                        ${(item.price * item.quantity).toFixed(2)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => adjustQty(activeTable ?? "", item._id, -1)}>
+                                        <Minus size={11} />
+                                    </button>
+                                    <span>{item.quantity}</span>
+                                    <button onClick={() => adjustQty(activeTable ?? "", item._id, 1)}>
+                                        <Plus size={11} />
+                                    </button>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Add a note..."
+                                    value={item.note ?? ""}
+                                    onChange={(e) => updateNote(activeTable ?? "", item._id, e.target.value)}
+                                    className="w-full text-[11px] border border-neutral-100 rounded-lg px-2 py-1 mt-1 outline-none focus:border-indigo-300 text-neutral-500 placeholder:text-neutral-300"
+                                />
+                                <Separator />
+                            </div>
+                        ))
+                    )}
+
                 </div>
 
                 {/* Totals */}
@@ -391,15 +369,16 @@ export default function CashierScreen() {
                 {/* Actions */}
                 <div className="px-5 pb-5 flex flex-col gap-2">
                     <Button
+                        disabled={getCart(activeTable ?? "").length === 0}
                         variant="outline"
                         className="w-full rounded-xl h-10 text-xs font-bold tracking-wide border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                     >
                         <CheckCircle size={13} className="mr-2" />
                         Confirm Order
                     </Button>
-                    <Button className="w-full rounded-xl h-12 text-sm font-black tracking-wide bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
+                    <Button disabled={getCart(activeTable ?? "").length === 0} className="w-full rounded-xl h-12 text-sm font-black tracking-wide bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
                         <CreditCard size={15} className="mr-2" />
-                        Pay Now
+                        Pay Now — ${total.toFixed(2)}
                     </Button>
                 </div>
             </aside>

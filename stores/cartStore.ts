@@ -7,37 +7,61 @@ export type CartItem = {
     price: number;
     image?: string;
     quantity: number;
+    note?: string;
 };
 
 type CartStore = {
-    cart: CartItem[];
-    addToCart: (item: Omit<CartItem, "quantity">) => void;
-    adjustQty: (id: Id<"menuItems">, delta: number) => void;
-    clearCart: () => void;
+    carts: Record<string, CartItem[]>; // key = tableId
+    addToCart: (
+        tableId: string,
+        item: Omit<CartItem, "quantity" | "note">,
+    ) => void;
+    adjustQty: (tableId: string, id: Id<"menuItems">, delta: number) => void;
+    updateNote: (tableId: string, id: Id<"menuItems">, note: string) => void;
+    clearCart: (tableId: string) => void;
+    getCart: (tableId: string) => CartItem[];
 };
 
-export const useCart = create<CartStore>((set) => ({
-    cart: [],
+export const useCart = create<CartStore>((set, get) => ({
+    carts: {},
 
-    addToCart: (item) =>
+    getCart: (tableId) => get().carts[tableId] ?? [],
+
+    addToCart: (tableId, item) =>
         set((state) => {
-            const existing = state.cart.find((i) => i._id === item._id);
-            if (existing) {
-                return {
-                    cart: state.cart.map((i) =>
-                        i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
-                    ),
-                };
-            }
-            return { cart: [...state.cart, { ...item, quantity: 1 }] };
+            const current = state.carts[tableId] ?? [];
+            const existing = current.find((i) => i._id === item._id);
+
+            const updated = existing
+                ? current.map((i) =>
+                    i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i,
+                )
+                : [...current, { ...item, quantity: 1, note: "" }];
+
+            return { carts: { ...state.carts, [tableId]: updated } };
         }),
 
-    adjustQty: (id, delta) =>
-        set((state) => ({
-            cart: state.cart
+    adjustQty: (tableId, id, delta) =>
+        set((state) => {
+            const current = state.carts[tableId] ?? [];
+            const updated = current
                 .map((i) => (i._id === id ? { ...i, quantity: i.quantity + delta } : i))
-                .filter((i) => i.quantity > 0),
-        })),
+                .filter((i) => i.quantity > 0);
 
-    clearCart: () => set({ cart: [] }),
+            return { carts: { ...state.carts, [tableId]: updated } };
+        }),
+
+    updateNote: (tableId, id, note) =>
+        set((state) => {
+            const current = state.carts[tableId] ?? [];
+            const updated = current.map((i) => (i._id === id ? { ...i, note } : i));
+            return { carts: { ...state.carts, [tableId]: updated } };
+        }),
+
+    clearCart: (tableId) =>
+        set((state) => {
+            const updated = { ...state.carts };
+            delete updated[tableId];
+            return { carts: updated };
+        }),
 }));
