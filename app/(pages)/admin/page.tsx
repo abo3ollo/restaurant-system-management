@@ -14,7 +14,8 @@ import Dashboard from "@/app/_components/AdminPage/Dashboard";
 import UserManagement from "@/app/_components/AdminPage/UserManagement";
 
 import { useRoleGuard } from "@/hooks/useRoleGuard";
-import { useClerk } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, useAuth, useClerk, UserButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 const NAV = [
     { label: "Dashboard", icon: LayoutDashboard, active: true },
@@ -27,12 +28,15 @@ const NAV = [
 
 
 
-export default function AdminDashboard() { 
+export default function AdminDashboard() {
     // Call all hooks FIRST
     const router = useRouter();
     const { signOut } = useClerk();
     const [activeNav, setActiveNav] = useState("Dashboard");
     const { isLoading, currentUser } = useRoleGuard(["admin"]);
+    // console.log(currentUser);
+    const { isSignedIn } = useAuth()
+
 
     const handleChangeRole = async () => {
         await signOut();
@@ -40,7 +44,7 @@ export default function AdminDashboard() {
     };
 
     // Then conditional logic in JSX
-    if (isLoading ) {
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-[#F7F6F3] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
@@ -54,7 +58,6 @@ export default function AdminDashboard() {
     }
 
     // Now TypeScript knows currentUser is defined here
-    
 
     return (
         <div className="flex h-screen bg-[#F5F5F3] overflow-hidden" style={{ fontFamily: "'DM Sans','Inter',sans-serif" }}>
@@ -97,12 +100,12 @@ export default function AdminDashboard() {
 
             {/* Main */}
             <div className="flex-1 flex flex-col overflow-hidden">
-                
+
                 {/* Topbar */}
                 <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-8 gap-4 shrink-0">
                     <div>
-                        <h2 className="text-base font-black text-neutral-900 leading-tight">Good morning, Admin 👋</h2>
-                        <p className="text-xs text-neutral-400">Wednesday, April 8 2026</p>
+                        <h2 className="text-base font-black text-neutral-900 leading-tight">Good morning, {currentUser?.name || "Admin"} 👋</h2>
+                        <p className="text-xs text-neutral-400">{new Date().toLocaleDateString()}</p>
                     </div>
                     <div className="ml-auto flex items-center gap-3">
                         <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-xl">
@@ -113,7 +116,18 @@ export default function AdminDashboard() {
                             <Bell size={16} className="text-neutral-500" />
                             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />
                         </button>
-                        <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xs font-black">A</div>
+                        <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xs font-black">{isSignedIn ? (
+                            <UserButton />
+                        ) : (
+                            <div className='hidden lg:flex gap-2'>
+                                <SignInButton mode='modal'>
+                                    <Button variant="ghost" size="sm">Login</Button>
+                                </SignInButton>
+                                <SignUpButton mode='modal'>
+                                    <Button size="sm">Signup</Button>
+                                </SignUpButton>
+                            </div>
+                        )}</div>
                     </div>
                 </header>
 

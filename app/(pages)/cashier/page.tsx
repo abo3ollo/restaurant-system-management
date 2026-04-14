@@ -10,6 +10,8 @@ import {
     CreditCard,
     CheckCircle,
     TrendingUp,
+    MinusCircle,
+    PlusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +24,7 @@ import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
+import { Input } from "@/components/ui/input";
 
 
 
@@ -185,7 +188,7 @@ export default function CashierScreen() {
             {/* ── MENU CENTER ── */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                {/* <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-6 gap-4 shrink-0">
+                <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-6 gap-4 shrink-0">
                     <div className="flex gap-6 flex-1">
                         {["Main Floor", "Kitchen", "Bar"].map((loc) => (
                             <button
@@ -215,14 +218,14 @@ export default function CashierScreen() {
 
                     <div className="flex items-center gap-3 ml-2">
                         <span className="text-xs font-semibold text-neutral-500 tracking-wide uppercase">
-                            Role: Admin
+                            Role: {currentUser?.role || "Cashier"}
                         </span>
                         <button className="relative p-2 rounded-xl hover:bg-neutral-50">
                             <Bell size={16} className="text-neutral-500" />
                             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
                         </button>
                     </div>
-                </header> */}
+                </header>
 
                 {/* Menu tabs */}
                 {/* Tabs */}
@@ -311,8 +314,8 @@ export default function CashierScreen() {
                         <h2 className="text-sm font-black tracking-wide text-neutral-800 uppercase">
                             Order Summary
                         </h2>
-                        <p className="text-[10px] text-neutral-400 mt-0.5 tracking-wider uppercase">
-                            Terminal #04 • User: Sarah M.
+                        <p className="text-[11px] text-neutral-400 mt-0.5 tracking-wider ">
+                            User :{currentUser?.name || "Cashier"}
                         </p>
                     </div>
                     <button
@@ -356,11 +359,11 @@ export default function CashierScreen() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => adjustQty(activeTable ?? "", item._id, -1)}>
-                                        <Minus size={11} />
+                                        <MinusCircle size={15} className="cursor-pointer " />
                                     </button>
                                     <span>{item.quantity}</span>
                                     <button onClick={() => adjustQty(activeTable ?? "", item._id, 1)}>
-                                        <Plus size={11} />
+                                        <PlusCircle size={15} className="cursor-pointer" />
                                     </button>
                                 </div>
                                 <input
