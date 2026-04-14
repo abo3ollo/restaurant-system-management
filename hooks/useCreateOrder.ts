@@ -7,21 +7,22 @@ import { useCart } from "@/stores/cartStore";
 
 export const useCreateOrder = () => {
     const createOrder = useMutation(api.orders.createOrder);
-    const { cart, clearCart } = useCart();
+    const { getCart, clearCart } = useCart();
 
     const handleConfirm = async (tableId: string, userId: string) => {
-        if (!cart.length) return;
+        if (!getCart(tableId).length) return;
 
         await createOrder({
             tableId: tableId as Id<"tables">,
             userId: userId as Id<"users">,
-            items: cart.map((item) => ({
+            items: getCart(tableId).map((item) => ({
                 itemId: item._id,
                 quantity: item.quantity,
+                note: item.note,
             })),
         });
 
-        clearCart();
+        clearCart(tableId);
     };
 
     return { handleConfirm };

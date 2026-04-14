@@ -9,6 +9,7 @@ export const createOrder = mutation({
             v.object({
                 itemId: v.id("menuItems"),
                 quantity: v.number(),
+                note: v.optional(v.string()),
             }),
         ),
     },
@@ -39,6 +40,7 @@ export const createOrder = mutation({
                 orderId,
                 itemId: item.itemId,
                 quantity: item.quantity,
+                notes: item.note,
             });
         }
 

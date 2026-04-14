@@ -24,7 +24,6 @@ export default function RootLayout({
   return (
     <html lang="en" >
       <body className={`${cairo.variable} font-family-name:var(--font-cairo) antialiased`}>
-        {/* <Navbar/> */}
         <ConvexClerkProvider>
         {children}
         </ConvexClerkProvider>

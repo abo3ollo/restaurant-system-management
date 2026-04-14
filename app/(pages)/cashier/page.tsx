@@ -18,16 +18,54 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useCart } from "@/stores/cartStore";
 
+import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 
 
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 
 export default function CashierScreen() {
+    const router = useRouter();
+    const { signOut } = useClerk();
+
+    // Call ALL hooks first - BEFORE any conditional logic
+    const { isLoading  , currentUser } = useRoleGuard(["admin", "cashier"]);
     const [activeTable, setActiveTable] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<string>("All");
-
     const data = useQuery(api.menuItems.getMenu);
+    const tables = useQuery(api.tables.getTables);
+    const { getCart, addToCart, adjustQty, updateNote, clearCart } = useCart();
+
+    // ⚠️ IMPORTANT: Hook calls MUST come before any conditional returns
+    // Set activeTable to first table when tables load
+    useEffect(() => {
+        if (tables && tables.length > 0 && !activeTable) {
+            setActiveTable(tables[0]._id);
+        }
+    }, [tables, activeTable]);
+
+    // Now we can use conditional logic in the code  
+    const handleChangeRole = async () => {
+        await signOut();
+        router.push("/");
+    };
+
+    // Show loading while role guard checks permissions
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-neutral-900 flex items-center justify-center">
+                        <span className="text-white font-black text-lg leading-none">f</span>
+                    </div>
+                    <p className="text-sm text-neutral-400 font-medium">Loading cashier system...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Create a mapping of categoryId to category name
     const categoryMap = new Map((data?.categories || []).map((cat: any) => [cat._id, cat.name]));
@@ -36,21 +74,6 @@ export default function CashierScreen() {
     const filteredItems = activeTab === "All"
         ? data?.items?.filter((item) => item.available)
         : data?.items?.filter((item) => item.categoryId === activeTab && item.available);
-
-    const tables = useQuery(api.tables.getTables);
-
-    // Set activeTable to first table when tables load
-    useEffect(() => {
-        if (tables && tables.length > 0 && !activeTable) {
-            setActiveTable(tables[0]._id);
-        }
-    }, [tables, activeTable]);
-
-
-    // At the top of your cashier component
-    const { getCart, addToCart, adjustQty, updateNote, clearCart } = useCart();
-
-
 
     // Calculate table statistics
     const freeTablesCount = tables?.filter(t =>
@@ -283,13 +306,22 @@ export default function CashierScreen() {
             {/* ── ORDER SUMMARY ── */}
             <aside className="w-70 shrink-0 bg-white border-l border-neutral-100 flex flex-col">
                 {/* Header */}
-                <div className="px-5 pt-5 pb-3 border-b border-neutral-100">
-                    <h2 className="text-sm font-black tracking-wide text-neutral-800 uppercase">
-                        Order Summary
-                    </h2>
-                    <p className="text-[10px] text-neutral-400 mt-0.5 tracking-wider uppercase">
-                        Terminal #04 • User: Sarah M.
-                    </p>
+                <div className="px-5 pt-5 pb-3 border-b border-neutral-100 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-sm font-black tracking-wide text-neutral-800 uppercase">
+                            Order Summary
+                        </h2>
+                        <p className="text-[10px] text-neutral-400 mt-0.5 tracking-wider uppercase">
+                            Terminal #04 • User: Sarah M.
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleChangeRole}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                        <LogOut size={13} />
+                        Change Role
+                    </button>
                 </div>
 
                 {/* Table badge */}
@@ -370,6 +402,10 @@ export default function CashierScreen() {
                 <div className="px-5 pb-5 flex flex-col gap-2">
                     <Button
                         disabled={getCart(activeTable ?? "").length === 0}
+                        // onClick={async () => {
+                        //     if (!activeTable || !currentUser?._id) return;
+                        //     await handleConfirm(activeTable, currentUser._id);
+                        // }}
                         variant="outline"
                         className="w-full rounded-xl h-10 text-xs font-bold tracking-wide border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                     >

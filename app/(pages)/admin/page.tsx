@@ -11,6 +11,10 @@ import {
 import { cn } from "@/lib/utils";
 import MenuItems from "@/app/_components/AdminPage/menuItems";
 import Dashboard from "@/app/_components/AdminPage/Dashboard";
+import UserManagement from "@/app/_components/AdminPage/UserManagement";
+
+import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { useClerk } from "@clerk/nextjs";
 
 const NAV = [
     { label: "Dashboard", icon: LayoutDashboard, active: true },
@@ -23,9 +27,34 @@ const NAV = [
 
 
 
-export default function AdminDashboard() {
+export default function AdminDashboard() { 
+    // Call all hooks FIRST
     const router = useRouter();
+    const { signOut } = useClerk();
     const [activeNav, setActiveNav] = useState("Dashboard");
+    const { isLoading, currentUser } = useRoleGuard(["admin"]);
+
+    const handleChangeRole = async () => {
+        await signOut();
+        router.push("/");
+    };
+
+    // Then conditional logic in JSX
+    if (isLoading ) {
+        return (
+            <div className="min-h-screen bg-[#F7F6F3] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-neutral-900 flex items-center justify-center">
+                        <span className="text-white font-black text-lg leading-none">f</span>
+                    </div>
+                    <p className="text-sm text-neutral-400 font-medium">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Now TypeScript knows currentUser is defined here
+    
 
     return (
         <div className="flex h-screen bg-[#F5F5F3] overflow-hidden" style={{ fontFamily: "'DM Sans','Inter',sans-serif" }}>
@@ -59,9 +88,9 @@ export default function AdminDashboard() {
                             <Icon size={15} />{label}
                         </button>
                     ))}
-                    <button onClick={() => router.push("/")}
+                    <button onClick={handleChangeRole}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase text-red-400 hover:bg-red-50 hover:text-red-600 transition-all mt-1">
-                        <LogOut size={15} />Sign Out
+                        <LogOut size={15} /> Change Role
                     </button>
                 </div>
             </aside>
@@ -93,6 +122,7 @@ export default function AdminDashboard() {
                 <div className="flex-1 overflow-y-auto p-8">
                     {activeNav === "Dashboard" && <Dashboard />}
                     {activeNav === "Menu" && <MenuItems />}
+                    {activeNav === "Users" && <UserManagement />}
                 </div>
             </div>
         </div>

@@ -7,6 +7,8 @@ import {
     AlertCircle, Coffee, Send, ChevronRight, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { useClerk } from "@clerk/nextjs";
 
 type TableStatus = "available" | "occupied" | "reserved" | "needs_attention";
 
@@ -43,10 +45,20 @@ const NOTES_PRESETS = [
 ];
 
 export default function WaiterPage() {
+    // Call all hooks FIRST
+    const { signOut } = useClerk();
     const router = useRouter();
     const [selected, setSelected] = useState<string | null>(null);
     const [note, setNote] = useState("");
     const [sentItems, setSentItems] = useState<string[]>([]);
+    
+    // Protected route
+    const { isLoading } = useRoleGuard(["admin", "waiter"]); // ← admin can access too
+    
+    const handleChangeRole = async () => {
+        await signOut();
+        router.push("/");
+    };
 
     const table = TABLES.find((t) => t.id === selected);
 
@@ -61,6 +73,8 @@ export default function WaiterPage() {
         reserved: TABLES.filter((t) => t.status === "reserved").length,
     };
 
+    if (isLoading) return <div>Loading...</div>;
+
     return (
         <div className="flex h-screen bg-[#F5F5F3] overflow-hidden" style={{ fontFamily: "'DM Sans','Inter',sans-serif" }}>
 
@@ -68,7 +82,7 @@ export default function WaiterPage() {
             <div className="flex-1 flex flex-col overflow-hidden">
 
                 {/* Header */}
-                <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-6 gap-4 shrink-0">
+                <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-6 gap-4 justify-between shrink-0">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-neutral-900 flex items-center justify-center">
                             <span className="text-white font-black text-sm leading-none">f</span>
@@ -88,8 +102,8 @@ export default function WaiterPage() {
                             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />
                         </button>
                         <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white text-xs font-black">W</div>
-                        <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 hover:text-red-500 transition-colors px-2 py-1.5 rounded-xl hover:bg-red-50">
-                            <LogOut size={13} /> Out
+                        <button onClick={handleChangeRole} className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 transition-colors px-2 py-1.5 rounded-xl hover:bg-red-50">
+                            <LogOut size={13} /> Change Role
                         </button>
                     </div>
                 </header>
