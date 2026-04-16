@@ -25,6 +25,7 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { Input } from "@/components/ui/input";
+import { useCreateOrder } from "@/hooks/useCreateOrder";
 
 
 
@@ -35,12 +36,14 @@ export default function CashierScreen() {
     const { signOut } = useClerk();
 
     // Call ALL hooks first - BEFORE any conditional logic
-    const { isLoading  , currentUser } = useRoleGuard(["admin", "cashier"]);
+    const { isLoading, currentUser } = useRoleGuard(["admin", "cashier"]);
     const [activeTable, setActiveTable] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<string>("All");
     const data = useQuery(api.menuItems.getMenu);
     const tables = useQuery(api.tables.getTables);
     const { getCart, addToCart, adjustQty, updateNote, clearCart } = useCart();
+
+    const { handleConfirm } = useCreateOrder();
 
     // ⚠️ IMPORTANT: Hook calls MUST come before any conditional returns
     // Set activeTable to first table when tables load
@@ -404,11 +407,11 @@ export default function CashierScreen() {
                 {/* Actions */}
                 <div className="px-5 pb-5 flex flex-col gap-2">
                     <Button
-                        disabled={getCart(activeTable ?? "").length === 0}
-                        // onClick={async () => {
-                        //     if (!activeTable || !currentUser?._id) return;
-                        //     await handleConfirm(activeTable, currentUser._id);
-                        // }}
+                        disabled={cart.length === 0}
+                        onClick={() => {
+                            if (!activeTable || !currentUser?._id) return;
+                            handleConfirm(activeTable, currentUser._id);
+                        }}
                         variant="outline"
                         className="w-full rounded-xl h-10 text-xs font-bold tracking-wide border-neutral-200 text-neutral-700 hover:bg-neutral-50"
                     >

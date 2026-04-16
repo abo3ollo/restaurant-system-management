@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 🍽️ Foodics — Full Project Summary
 
-## Getting Started
+---
 
-First, run the development server:
+### Tech Stack
+| | |
+|---|---|
+| **Frontend** | Next.js 14 (App Router) + TypeScript |
+| **Backend** | Convex (DB + mutations + queries) |
+| **Auth** | Clerk + Convex JWT |
+| **Styling** | Tailwind CSS + shadcn/ui |
+| **State** | Zustand (per-table cart) |
+| **Forms** | react-hook-form + zod |
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+### Database Schema
+| Table | Fields |
+|---|---|
+| `users` | clerkId, name, email, role |
+| `tables` | name, status, capacity |
+| `categories` | name |
+| `menuItems` | name, price, categoryId, image, description, available |
+| `orders` | tableId, userId, status, total, createdAt |
+| `orderItems` | orderId, itemId, quantity, note |
+
+---
+
+### Pages & Roles
+| Route | Role | Access |
+|---|---|---|
+| `/` | Public | Role selector + Clerk sign-in |
+| `/admin` | Admin only | Full system access |
+| `/cashier` | Admin + Cashier | Orders & payments |
+| `/waiter` | Admin + Waiter | Table service |
+| `/unauthorized` | All | Access denied page |
+
+---
+
+### Auth Flow
+```
+User visits "/"
+  → Selects role (Admin/Cashier/Waiter)
+  → Signs in with Clerk modal
+  → upsertUser() → saves to Convex with selected role
+  → window.location.href → navigates to role page
+  → useRoleGuard() checks DB role
+  → Wrong role → /unauthorized
+  → Correct role → page renders ✅
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Key Files
+```
+app/
+  (pages)/
+    home/page.tsx        ← role selector + Clerk sign-in
+    admin/page.tsx       ← admin dashboard
+    cashier/page.tsx     ← cashier POS screen
+    waiter/page.tsx      ← waiter screen
+  _components/
+    AdminPage/
+      Dashboard.tsx
+      MenuItems.tsx
+      AddMenuItemsModal.tsx
+      EditMenuItemModal.tsx
+      UserManagement.tsx
+    ConvexClerkProvider.tsx
+    Navbar.tsx
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+convex/
+  schema.ts
+  auth.config.ts         ← Clerk JWT domain
+  menuItems.ts           ← getMenu, addMenuItem, editMenuItem
+  orders.ts              ← createOrder
+  tables.ts              ← getTables
+  users.ts               ← getCurrentUser, upsertUser
 
-## Learn More
+hooks/
+  useRoleGuard.ts        ← role-based route protection
+  useCreateOrder.ts      ← order submission
 
-To learn more about Next.js, take a look at the following resources:
+stores/
+  cartStore.ts           ← per-table Zustand cart
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Cart System
+```ts
+carts: {
+  "tableId_1": [{ name, price, qty, note }],
+  "tableId_2": [{ name, price, qty, note }],
+  "tableId_3": [],
+}
+```
+- Each table has its own isolated cart
+- Live totals per table shown in sidebar
+- Table dot turns red when cart has items
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### What's Next
+- [ ] Waiter page
+- [ ] Orders management page
+- [ ] Payment flow (Pay Now button)
+- [ ] Reports / analytics dashboard
+- [ ] Real-time order updates with Convex subscriptions
+- [ ] Print receipt feature
+- [ ] Search menu items
+- [ ] Low stock alerts

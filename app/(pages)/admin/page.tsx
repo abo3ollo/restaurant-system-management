@@ -16,6 +16,7 @@ import UserManagement from "@/app/_components/AdminPage/UserManagement";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { SignInButton, SignUpButton, useAuth, useClerk, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import Orders from "@/app/_components/AdminPage/Orders";
 
 const NAV = [
     { label: "Dashboard", icon: LayoutDashboard, active: true },
@@ -137,6 +138,7 @@ export default function AdminDashboard() {
                     {activeNav === "Dashboard" && <Dashboard />}
                     {activeNav === "Menu" && <MenuItems />}
                     {activeNav === "Users" && <UserManagement />}
+                    {activeNav === "Orders" && <Orders />}
                 </div>
             </div>
         </div>

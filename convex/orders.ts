@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const createOrder = mutation({
@@ -50,5 +50,68 @@ export const createOrder = mutation({
         });
 
         return orderId;
+    },
+
+    
+});
+export const getOrders = query({
+    handler: async (ctx) => {
+        const orders = await ctx.db.query("orders")
+            .order("desc")
+            .collect();
+
+        // Join table name and order items
+        const ordersWithDetails = await Promise.all(
+            orders.map(async (order) => {
+                const table = await ctx.db.get(order.tableId);
+                const items = await ctx.db
+                    .query("orderItems")
+                    .filter((q) => q.eq(q.field("orderId"), order._id))
+                    .collect();
+
+                const itemsWithDetails = await Promise.all(
+                    items.map(async (item) => {
+                        const menuItem = await ctx.db.get(item.itemId);
+                        return {
+                            ...item,
+                            menuItemName: menuItem?.name ?? "Unknown",
+                            menuItemPrice: menuItem?.price ?? 0,
+                        };
+                    })
+                );
+
+                return {
+                    ...order,
+                    tableName: table?.name ?? "Unknown",
+                    items: itemsWithDetails,
+                };
+            })
+        );
+
+        return ordersWithDetails;
+    },
+});
+
+export const updateOrderStatus = mutation({
+    args: {
+        orderId: v.id("orders"),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("confirmed"),
+            v.literal("preparing"),
+            v.literal("served"),
+            v.literal("paid"),
+        ),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.orderId, { status: args.status });
+
+        // If paid → free the table
+        if (args.status === "paid") {
+            const order = await ctx.db.get(args.orderId);
+            if (order) {
+                await ctx.db.patch(order.tableId, { status: "available" });
+            }
+        }
     },
 });

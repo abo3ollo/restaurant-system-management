@@ -9,7 +9,7 @@ export default defineSchema({
         role: v.union(
             v.literal("admin"),
             v.literal("cashier"),
-            v.literal("waiter")
+            v.literal("waiter"),
         ),
     }).index("by_clerkId", ["clerkId"]),
 
@@ -18,7 +18,7 @@ export default defineSchema({
         status: v.union(
             v.literal("available"),
             v.literal("occupied"),
-            v.literal("reserved")
+            v.literal("reserved"),
         ),
         capacity: v.optional(v.number()),
     }),
@@ -30,28 +30,28 @@ export default defineSchema({
     menuItems: defineTable({
         name: v.string(),
         price: v.number(),
-        categoryId: v.optional(v.id("categories")),  // ← optional
-        category: v.optional(v.string()),             // ← keep old field too
+        categoryId: v.optional(v.id("categories")), // ← optional
+        category: v.optional(v.string()), // ← keep old field too
         image: v.optional(v.string()),
         description: v.optional(v.string()),
         available: v.boolean(),
         isDeleted: v.optional(v.boolean()),
     }),
 
+    // convex/schema.ts
     orders: defineTable({
         tableId: v.id("tables"),
-        userId: v.id("users"), // waiter or cashier
+        userId: v.id("users"),
         status: v.union(
             v.literal("pending"),
+            v.literal("confirmed"),
             v.literal("preparing"),
             v.literal("served"),
-            v.literal("paid")
+            v.literal("paid"),
         ),
         total: v.number(),
         createdAt: v.number(),
-    })
-        .index("by_table", ["tableId"])
-        .index("by_status", ["status"]),
+    }),
 
     orderItems: defineTable({
         orderId: v.id("orders"),
@@ -63,14 +63,8 @@ export default defineSchema({
     payments: defineTable({
         orderId: v.id("orders"),
         amount: v.number(),
-        method: v.union(
-            v.literal("cash"),
-            v.literal("card")
-        ),
-        status: v.union(
-            v.literal("pending"),
-            v.literal("completed")
-        ),
+        method: v.union(v.literal("cash"), v.literal("card")),
+        status: v.union(v.literal("pending"), v.literal("completed")),
         createdAt: v.number(),
     }).index("by_order", ["orderId"]),
 });
