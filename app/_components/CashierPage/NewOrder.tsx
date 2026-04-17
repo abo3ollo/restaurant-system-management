@@ -1,50 +1,34 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { useCart } from "@/stores/cartStore";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
-    UtensilsCrossed, ShoppingBasket, Plus, Minus,
-    ClipboardList, TrendingUp, LogOut, Bell,
+    ShoppingBasket,
+    TrendingUp, LogOut,
     MinusCircle,
     PlusCircle,
     CheckCircle,
     CreditCard,
 } from "lucide-react";
-import MyOrders from "@/app/_components/waiter/MyOrders";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 
 
-
-type Order = {
-    _id: string;
-    tableName: string;
-    status: string;
-    total: number;
-    createdAt: number;
-    items: {
-        _id: string;
-        menuItemName: string;
-        quantity: number;
-        note?: string;
-    }[];
-};
-
 function NewOrder() {
-      const router = useRouter();
+    const router = useRouter();
     const { signOut } = useClerk();
     const { isLoading, currentUser } = useRoleGuard(["admin", "cashier"]);
 
     // All hooks before conditional returns
-    
+    const [activeTab, setActiveTab] = useState<"new-order" | "my-orders" | "dashboard">("new-order");
     const [activeTable, setActiveTable] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState<string>("All");
 
@@ -84,7 +68,7 @@ function NewOrder() {
         : data?.items?.filter(i => i.categoryId === activeCategory && i.available);
 
 
-    
+
     // Get current table name
     const currentTableName = tables?.find(t => t._id === activeTable)?.name ?? activeTable ?? "Select a table";
 
@@ -103,11 +87,46 @@ function NewOrder() {
         ? allOrders
         : allOrders?.filter(o => o.userId === currentUser?._id);
 
-    
+
 
 
     return (
         <>
+            <div className="w-60 shrink-0 bg-white border-l border-neutral-100 flex flex-col pt-5 ">
+                {activeTab === "new-order" && (
+                    <>
+                        <p className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-3 px-1">
+                            Select Table
+                        </p>
+                        <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0">
+                            {tables?.map((table) => {
+                                const tableCart = getCart(table._id);
+                                const isBusy = table.status === "occupied" || tableCart.length > 0;
+                                return (
+                                    <button
+                                        key={table._id}
+                                        onClick={() => setActiveTable(table._id)}
+                                        className={cn(
+                                            "text-left rounded-2xl p-3 border transition-all",
+                                            activeTable === table._id
+                                                ? "border-amber-300 bg-amber-50 shadow-sm"
+                                                : "border-neutral-100 bg-white hover:border-neutral-200"
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-bold text-neutral-800">{table.name}</span>
+                                            <span className={cn("w-2 h-2 rounded-full", isBusy ? "bg-red-400" : "bg-green-400")} />
+                                        </div>
+                                        <p className="text-xs text-neutral-400 mt-0.5">
+                                            {table.capacity ? `${table.capacity} Guests` : table.status}
+                                        </p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </>
+                )}
+            </div>
             {/* Menu */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}

@@ -19,10 +19,10 @@ import {
     CheckCircle,
     CreditCard,
 } from "lucide-react";
-import MyOrders from "@/app/_components/waiter/MyOrders";
+import MyOrders from "@/app/_components/CashierPage/MyOrders";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
-import NewOrder from "@/app/_components/waiter/NewOrder";
-import DashboardCashier from "@/app/_components/waiter/DashboardCashier";
+import NewOrder from "@/app/_components/CashierPage/NewOrder";
+import DashboardCashier from "@/app/_components/CashierPage/DashboardCashier";
 
 
 export default function CashierScreen() {
@@ -133,40 +133,7 @@ export default function CashierScreen() {
                     </button>
                 </div>
 
-                {/* Tables */}
-                {activeTab === "new-order" && (
-                    <>
-                        <p className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-3 px-1">
-                            Select Table
-                        </p>
-                        <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0">
-                            {tables?.map((table) => {
-                                const tableCart = getCart(table._id);
-                                const isBusy = table.status === "occupied" || tableCart.length > 0;
-                                return (
-                                    <button
-                                        key={table._id}
-                                        onClick={() => setActiveTable(table._id)}
-                                        className={cn(
-                                            "text-left rounded-2xl p-3 border transition-all",
-                                            activeTable === table._id
-                                                ? "border-amber-300 bg-amber-50 shadow-sm"
-                                                : "border-neutral-100 bg-white hover:border-neutral-200"
-                                        )}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm font-bold text-neutral-800">{table.name}</span>
-                                            <span className={cn("w-2 h-2 rounded-full", isBusy ? "bg-red-400" : "bg-green-400")} />
-                                        </div>
-                                        <p className="text-xs text-neutral-400 mt-0.5">
-                                            {table.capacity ? `${table.capacity} Guests` : table.status}
-                                        </p>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </>
-                )}
+                
 
             </div>
 
