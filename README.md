@@ -100,6 +100,23 @@ carts: {
 - Table dot turns red when cart has items
 ---
 
+## Create order 
+
+Cashier adds items → clicks "Confirm Order"
+        ↓
+createOrder mutation:
+  - calculates total
+  - inserts into orders (status: "pending")
+  - inserts into orderItems (with notes)
+  - patches table → "occupied"
+  - clears cart
+        ↓
+Admin Orders page shows real-time updates
+  - Stats cards per status
+  - Full table with items + notes
+  - "Mark →" button advances status
+  - When marked "paid" → table freed → status "available"
+
 ### What's Next
 - [ ] Waiter page
 - [ ] Orders management page

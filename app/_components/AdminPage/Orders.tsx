@@ -7,32 +7,13 @@ import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { Clock, CheckCircle, ChefHat, Utensils, CreditCard } from "lucide-react";
 
+// In Orders.tsx STATUS_CONFIG — add role hints
 const STATUS_CONFIG = {
-    pending: {
-        label: "Pending",
-        color: "bg-yellow-100 text-yellow-700",
-        icon: Clock,
-    },
-    confirmed: {
-        label: "Confirmed",
-        color: "bg-blue-100 text-blue-700",
-        icon: CheckCircle,
-    },
-    preparing: {
-        label: "Preparing",
-        color: "bg-orange-100 text-orange-700",
-        icon: ChefHat,
-    },
-    served: {
-        label: "Served",
-        color: "bg-green-100 text-green-700",
-        icon: Utensils,
-    },
-    paid: {
-        label: "Paid",
-        color: "bg-neutral-100 text-neutral-500",
-        icon: CreditCard,
-    },
+    pending:   { label: "Pending",   color: "bg-yellow-100 text-yellow-700", icon: Clock,        hint: "Awaiting cashier confirmation" },
+    confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-700",     icon: CheckCircle,  hint: "Kitchen preparing" },
+    preparing: { label: "Preparing", color: "bg-orange-100 text-orange-700", icon: ChefHat,      hint: "Waiter to serve" },
+    served:    { label: "Served",    color: "bg-green-100 text-green-700",   icon: Utensils,     hint: "Cashier to collect payment" },
+    paid:      { label: "Paid",      color: "bg-neutral-100 text-neutral-500", icon: CheckCircle, hint: "Completed" },
 };
 
 const STATUS_FLOW = ["pending", "confirmed", "preparing", "served", "paid"] as const;
