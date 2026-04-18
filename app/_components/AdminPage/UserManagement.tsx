@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Shield, DollarSign, UtensilsCrossed, Loader, Check, X } from "lucide-react";
+import { format, isToday, isYesterday } from 'date-fns';
 
 type Role = "admin" | "cashier" | "waiter";
 
@@ -33,6 +34,8 @@ const ROLE_CONFIG: Record<Role, { label: string; color: string; icon: any; bg: s
 
 export default function UserManagement() {
     const users = useQuery(api.users.getAllUsers);
+    console.log(users);
+
     const updateUserRole = useMutation(api.users.updateUserRole);
     const [changingUserId, setChangingUserId] = useState<string | null>(null);
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -76,6 +79,7 @@ export default function UserManagement() {
                             <tr className="border-b border-neutral-100 bg-neutral-50">
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Name</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Last Login</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Current Role</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -94,6 +98,15 @@ export default function UserManagement() {
                                             <p className="text-sm text-neutral-500">{user.email}</p>
                                         </td>
                                         <td className="px-6 py-4">
+                                           <p className="text-sm text-neutral-500">
+  {isToday(new Date(user._creationTime)) 
+    ? 'Today' 
+    : isYesterday(new Date(user._creationTime)) 
+      ? 'Yesterday' 
+      : format(new Date(user._creationTime), 'EEEE')}, {format(new Date(user._creationTime), 'h:mm a')}
+</p>
+                                        </td>
+                                        <td className="px-6 py-4">
                                             <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-bold", roleConfig.bg, roleConfig.color)}>
                                                 <RoleIcon size={14} />
                                                 {roleConfig.label}
@@ -107,7 +120,7 @@ export default function UserManagement() {
                                                     <>
                                                         {selectedRole && changingUserId !== user._id ? (
                                                             <div className="flex gap-1">
-                                                                {(["admin", "cashier", "waiter"] as Role[]).map((role) => (
+                                                                {(["admin", "cashier"] as Role[]).map((role) => (
                                                                     <button
                                                                         key={role}
                                                                         onClick={() => {
