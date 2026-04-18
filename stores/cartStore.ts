@@ -20,6 +20,7 @@ type CartStore = {
     updateNote: (tableId: string, id: Id<"menuItems">, note: string) => void;
     clearCart: (tableId: string) => void;
     getCart: (tableId: string) => CartItem[];
+    loadOrderToCart: (tableId: string, items: CartItem[]) => void;
 };
 
 export const useCart = create<CartStore>((set, get) => ({
@@ -64,4 +65,12 @@ export const useCart = create<CartStore>((set, get) => ({
             delete updated[tableId];
             return { carts: updated };
         }),
+
+    // Add to CartStore type
+
+    // Add to create():
+    loadOrderToCart: (tableId, items) =>
+        set((state) => ({
+            carts: { ...state.carts, [tableId]: items },
+        })),
 }));

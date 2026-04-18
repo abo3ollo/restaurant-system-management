@@ -116,43 +116,7 @@ export const updateOrderStatus = mutation({
     },
 });
 
-// export const getWaiterOrders = query({
-//     handler: async (ctx) => {
-//         const orders = await ctx.db.query("orders")
-//             .order("desc")
-//             .collect();
 
-//         const ordersWithDetails = await Promise.all(
-//             orders.map(async (order) => {
-//                 const table = await ctx.db.get(order.tableId);
-//                 const items = await ctx.db
-//                     .query("orderItems")
-//                     .filter((q) => q.eq(q.field("orderId"), order._id))
-//                     .collect();
-
-//                 const itemsWithDetails = await Promise.all(
-//                     items.map(async (item) => {
-//                         const menuItem = await ctx.db.get(item.itemId);
-//                         return {
-//                             ...item,
-//                             menuItemName: menuItem?.name ?? "Unknown",
-//                             menuItemPrice: menuItem?.price ?? 0,
-//                             menuItemImage: menuItem?.image ?? "",
-//                         };
-//                     })
-//                 );
-
-//                 return {
-//                     ...order,
-//                     tableName: table?.name ?? "Unknown",
-//                     items: itemsWithDetails,
-//                 };
-//             })
-//         );
-
-//         return ordersWithDetails;
-//     },
-// });
 
 
 export const getCashierOrders = query({
@@ -246,5 +210,51 @@ export const getMyOrders = query({
         );
 
         return ordersWithDetails;
+    },
+});
+
+// edit order items & quantity before confirming the order (only if it's still pending)
+export const updateOrder = mutation({
+    args: {
+        orderId: v.id("orders"),
+        items: v.array(v.object({
+            itemId: v.id("menuItems"),
+            quantity: v.number(),
+            note: v.optional(v.string()),
+        })),
+    },
+    handler: async (ctx, args) => {
+        // Delete existing order items
+        const existingItems = await ctx.db
+            .query("orderItems")
+            .filter((q) => q.eq(q.field("orderId"), args.orderId))
+            .collect();
+
+        await Promise.all(existingItems.map(item => ctx.db.delete(item._id)));
+
+        // Recalculate total
+        let total = 0;
+        for (const item of args.items) {
+            const menuItem = await ctx.db.get(item.itemId);
+            if (!menuItem) continue;
+            total += menuItem.price * item.quantity;
+        }
+
+        // Insert new items
+        await Promise.all(
+            args.items.map(item =>
+                ctx.db.insert("orderItems", {
+                    orderId: args.orderId,
+                    itemId: item.itemId,
+                    quantity: item.quantity,
+                    notes: item.note,
+                })
+            )
+        );
+
+        // Update total
+        await ctx.db.patch(args.orderId, { total });
+
+        return args.orderId;
     },
 });

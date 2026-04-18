@@ -1,4 +1,3 @@
-// app/_components/waiter/MyOrders.tsx
 "use client";
 
 import { useQuery } from "convex/react";
@@ -6,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { Clock, CheckCircle, ChefHat, Utensils, CreditCard } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { log } from "console";
 
 const STATUS_CONFIG = {
     pending: { label: "Pending", color: "bg-yellow-100 text-yellow-700", icon: Clock },
@@ -25,7 +25,7 @@ type Order = {
         _id: string;
         menuItemName: string;
         quantity: number;
-        note?: string;
+        notes?: string;
     }[];
 };
 
@@ -35,6 +35,10 @@ type Order = {
 export default function MyOrders({ orders }: { orders: Order[] }) {
 
     const allOrders = useQuery(api.orders.getOrders);
+    console.log(allOrders);
+    
+    
+    
     const { isLoading, currentUser } = useRoleGuard(["admin", "cashier"]);
 
 
@@ -91,9 +95,9 @@ export default function MyOrders({ orders }: { orders: Order[] }) {
                                     <p className="text-xs text-neutral-600">
                                         <span className="font-bold">{item.quantity}x</span> {item.menuItemName}
                                     </p>
-                                    {item.note && (
-                                        <span className="text-[10px] text-neutral-400 italic">
-                                            {item.note}
+                                    {item.notes && (
+                                        <span className="text-[12px] text-neutral-400 italic whitespace-nowrap">
+                                            {item.notes}
                                         </span>
                                     )}
                                 </div>

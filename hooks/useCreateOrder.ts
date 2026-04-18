@@ -25,7 +25,7 @@ export const useCreateOrder = () => {
                     note: item.note,
                 })),
             });
-            clearCart(tableId);
+            // clearCart(tableId);
             toast.success("Order confirmed!");
         } catch (error) {
             console.error(error);
