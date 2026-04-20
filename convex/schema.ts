@@ -62,9 +62,10 @@ export default defineSchema({
 
     payments: defineTable({
         orderId: v.id("orders"),
+        tableId: v.id("tables"),
         amount: v.number(),
         method: v.union(v.literal("cash"), v.literal("card")),
         status: v.union(v.literal("pending"), v.literal("completed")),
         createdAt: v.number(),
-    }).index("by_order", ["orderId"]),
+    }),
 });
