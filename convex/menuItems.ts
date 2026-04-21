@@ -10,14 +10,19 @@ export const get = query({
 
 export const getMenu = query({
     handler: async (ctx) => {
-        const allItems = await ctx.db.query("menuItems").collect();
-        const items = allItems.filter(item => !item.isDeleted);
+        const items = await ctx.db.query("menuItems").collect();
         const categories = await ctx.db.query("categories").collect();
 
-        return {
-            items,
-            categories,
-        };
+        const categoryMap = new Map(categories.map((c) => [c._id, c.name]));
+
+        const itemsWithCategory = items.map((item) => ({
+            ...item,
+            categoryName: item.categoryId
+                ? categoryMap.get(item.categoryId) ?? item.category ?? "Unknown"
+                : item.category ?? "Unknown",
+        }));
+
+        return { items: itemsWithCategory, categories };
     },
 });
 

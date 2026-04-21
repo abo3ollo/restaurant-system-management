@@ -20,10 +20,10 @@ import Orders from "@/app/_components/AdminPage/Orders";
 
 const NAV = [
     { label: "Dashboard", icon: LayoutDashboard, active: true },
-    { label: "Tables", icon: UtensilsCrossed },
+    // { label: "Tables", icon: UtensilsCrossed },
     { label: "Orders", icon: ClipboardList },
     { label: "Menu", icon: BookOpen },
-    { label: "Reports", icon: BarChart2 },
+    // { label: "Reports", icon: BarChart2 },
     { label: "Users", icon: Users },
 ];
 

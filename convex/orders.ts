@@ -258,3 +258,104 @@ export const updateOrder = mutation({
         return args.orderId;
     },
 });
+
+
+
+export const getDashboardStats = query({
+    handler: async (ctx) => {
+        const now = Date.now();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const todayStart = startOfToday.getTime();
+        const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+
+        // All orders
+        const allOrders = await ctx.db.query("orders").collect();
+
+        // Today's orders
+        const todayOrders = allOrders.filter(o => o.createdAt >= todayStart);
+        const yesterdayOrders = allOrders.filter(
+            o => o.createdAt >= yesterdayStart && o.createdAt < todayStart
+        );
+
+        // Today's revenue (paid orders only)
+        const todayRevenue = todayOrders
+            .filter(o => o.status === "paid")
+            .reduce((sum, o) => sum + o.total, 0);
+
+        const yesterdayRevenue = yesterdayOrders
+            .filter(o => o.status === "paid")
+            .reduce((sum, o) => sum + o.total, 0);
+
+        // Total orders today
+        const todayOrderCount = todayOrders.length;
+        const yesterdayOrderCount = yesterdayOrders.length;
+
+        // Avg order value today
+        const avgOrderValue = todayOrderCount > 0
+            ? todayRevenue / todayOrderCount
+            : 0;
+        const yesterdayAvg = yesterdayOrderCount > 0
+            ? yesterdayRevenue / yesterdayOrderCount
+            : 0;
+
+        // Recent orders with details
+        const recentOrders = await Promise.all(
+            allOrders
+                .sort((a, b) => b.createdAt - a.createdAt)
+                .slice(0, 5)
+                .map(async (order) => {
+                    const table = await ctx.db.get(order.tableId);
+                    const items = await ctx.db
+                        .query("orderItems")
+                        .filter(q => q.eq(q.field("orderId"), order._id))
+                        .collect();
+                    return {
+                        ...order,
+                        tableName: table?.name ?? "Unknown",
+                        itemCount: items.length,
+                    };
+                })
+        );
+
+        // Top items by revenue
+        const allOrderItems = await ctx.db.query("orderItems").collect();
+        const itemStats: Record<string, { name: string; orders: number; revenue: number }> = {};
+
+        await Promise.all(
+            allOrderItems.map(async (oi) => {
+                const menuItem = await ctx.db.get(oi.itemId);
+                if (!menuItem) return;
+                if (!itemStats[oi.itemId]) {
+                    itemStats[oi.itemId] = { name: menuItem.name, orders: 0, revenue: 0 };
+                }
+                itemStats[oi.itemId].orders += oi.quantity;
+                itemStats[oi.itemId].revenue += menuItem.price * oi.quantity;
+            })
+        );
+
+        const topItems = Object.values(itemStats)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 4);
+
+        // % change helper
+        const pctChange = (today: number, yesterday: number) => {
+            if (yesterday === 0) return today > 0 ? 100 : 0;
+            return +((((today - yesterday) / yesterday) * 100).toFixed(1));
+        };
+
+        return {
+            todayRevenue,
+            yesterdayRevenue,
+            todayOrderCount,
+            yesterdayOrderCount,
+            avgOrderValue,
+            yesterdayAvg,
+            revenueChange: pctChange(todayRevenue, yesterdayRevenue),
+            ordersChange: pctChange(todayOrderCount, yesterdayOrderCount),
+            avgChange: pctChange(avgOrderValue, yesterdayAvg),
+            recentOrders,
+            topItems,
+        };
+    },
+});

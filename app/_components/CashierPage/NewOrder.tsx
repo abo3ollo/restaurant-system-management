@@ -115,9 +115,16 @@ function NewOrder() {
 
     const categoryMap = new Map((data?.categories || []).map((c: any) => [c._id, c.name]));
 
+    const selectedCategoryName = data?.categories.find(c => c._id === activeCategory)?.name;
+
     const filteredItems = activeCategory === "All"
-        ? data?.items?.filter((i) => i.available)
-        : data?.items?.filter((i) => i.categoryId === activeCategory && i.available);
+        ? data?.items?.filter(i => i.available)
+        : data?.items?.filter(i =>
+            i.available && (
+                i.categoryId === activeCategory ||           // new items with proper ID
+                i.category === selectedCategoryName          // old items with string category
+            )
+        );
 
     const currentTableName = tables?.find((t) => t._id === activeTable)?.name ?? activeTable ?? "Select a table";
 
@@ -355,10 +362,10 @@ function NewOrder() {
                                             <span className={cn(
                                                 "text-[10px] font-bold px-2 py-0.5 rounded-lg",
                                                 order.status === "pending" ? "bg-yellow-100 text-yellow-700" :
-                                                order.status === "confirmed" ? "bg-blue-100 text-blue-700" :
-                                                order.status === "preparing" ? "bg-orange-100 text-orange-700" :
-                                                order.status === "served" ? "bg-green-100 text-green-700" :
-                                                "bg-neutral-100 text-neutral-500"
+                                                    order.status === "confirmed" ? "bg-blue-100 text-blue-700" :
+                                                        order.status === "preparing" ? "bg-orange-100 text-orange-700" :
+                                                            order.status === "served" ? "bg-green-100 text-green-700" :
+                                                                "bg-neutral-100 text-neutral-500"
                                             )}>
                                                 {order.status}
                                             </span>
