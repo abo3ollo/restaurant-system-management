@@ -25,12 +25,17 @@ export default function MenuItems() {
     const categoryMap = new Map(categories.map((cat: any) => [cat._id, cat.name]));
 
     // Get unique categories
-    const categoryList = ["All", ...new Set(menuItems.map((item: any) => item.categoryId))];
+    const categoryList = ["All", ...categories.map((cat: any) => cat._id)];
 
     // Filter items by category
+    const selectedCategoryName = categories.find((cat: any) => cat._id === selectedCategory)?.name;
+
     const filteredItems = selectedCategory === "All"
         ? menuItems
-        : menuItems.filter((item: any) => item.categoryId === selectedCategory);
+        : menuItems.filter((item: any) =>
+            item.categoryId === selectedCategory ||           // new items added manually
+            item.category === selectedCategoryName            // old items from JSONL import
+        );
 
     const handleEditClick = (item: any) => {
         setSelectedItem(item);
