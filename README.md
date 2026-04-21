@@ -3,9 +3,9 @@
 
 ### What's Next
 - [ ] Waiter page
-- [ ] Orders management page
-- [ ] Payment flow (Pay Now button)
-- [ ] Reports / analytics dashboard
+- [done] Orders management page
+- [done] Payment flow (Pay Now button)
+- [done] Reports / analytics dashboard
 - [ ] Real-time order updates with Convex subscriptions
 - [ ] Print receipt feature
 - [ ] Search menu items
@@ -41,6 +41,7 @@ A full-stack, real-time Point of Sale system built for restaurants. Manage table
 - Availability toggle per item
 - User management
 - Orders management with status updates
+- Reports & Analytics Dashboard (Daily/weekly/monthly revenue charts, Top selling items, Busiest hours heatmap, Export to CSV/PDF)
 
 ### 💰 Cashier Screen
 - Live table selection with status indicators (free/busy)

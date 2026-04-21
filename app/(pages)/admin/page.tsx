@@ -17,13 +17,14 @@ import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { SignInButton, SignUpButton, useAuth, useClerk, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import Orders from "@/app/_components/AdminPage/Orders";
+import Reports from "@/app/_components/AdminPage/Reports";
 
 const NAV = [
     { label: "Dashboard", icon: LayoutDashboard, active: true },
     // { label: "Tables", icon: UtensilsCrossed },
     { label: "Orders", icon: ClipboardList },
     { label: "Menu", icon: BookOpen },
-    // { label: "Reports", icon: BarChart2 },
+    { label: "Reports", icon: BarChart2 },
     { label: "Users", icon: Users },
 ];
 
@@ -139,6 +140,7 @@ export default function AdminDashboard() {
                     {activeNav === "Menu" && <MenuItems />}
                     {activeNav === "Users" && <UserManagement />}
                     {activeNav === "Orders" && <Orders />}
+                    {activeNav === "Reports" && <Reports />}
                 </div>
             </div>
         </div>
