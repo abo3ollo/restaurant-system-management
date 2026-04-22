@@ -1,7 +1,5 @@
-
-
-
 ### What's Next
+
 - [ ] Waiter page
 - [done] Orders management page
 - [done] Payment flow (Pay Now button)
@@ -11,7 +9,6 @@
 - [ ] Search menu items
 - [ ] Low stock alerts
 <!-- ///////////////////////////////////// -->
-
 
 # 🍽️ Foodics — Restaurant POS System
 
@@ -28,6 +25,7 @@ A full-stack, real-time Point of Sale system built for restaurants. Manage table
 ## ✨ Features
 
 ### 🔐 Authentication & Role Management
+
 - Role-based login (Admin / Cashier ) via Clerk
 - JWT integration between Clerk and Convex
 - Route protection with `useRoleGuard` hook
@@ -35,6 +33,7 @@ A full-stack, real-time Point of Sale system built for restaurants. Manage table
 - Unauthorized access page
 
 ### 👨‍💼 Admin Panel
+
 - Dashboard with live stats (revenue, orders, top items)
 - Full menu management (add, edit, delete items)
 - Category-based menu filtering
@@ -44,6 +43,7 @@ A full-stack, real-time Point of Sale system built for restaurants. Manage table
 - Reports & Analytics Dashboard (Daily/weekly/monthly revenue charts, Top selling items, Busiest hours heatmap, Export to CSV/PDF)
 
 ### 💰 Cashier Screen
+
 - Live table selection with status indicators (free/busy)
 - Per-table isolated cart (Zustand)
 - Menu grid with category tabs and search
@@ -52,66 +52,68 @@ A full-stack, real-time Point of Sale system built for restaurants. Manage table
 - Payment processing (Cash / Card)
 - Real-time subtotal, tax, and discount calculation
 
-## Create order and edit order 
+## Create order and edit order
 
 Cashier adds items → clicks "Confirm Order"
-        ↓
+↓
 createOrder mutation:
-  - calculates total
-  - inserts into orders (status: "pending")
-  - inserts into orderItems (with notes)
-  - patches table → "occupied"
-  
-        ↓
-Admin Orders page shows real-time updates
-  - Stats cards per status
-  - Full table with items + notes
-  - "Mark →" button advances status
-  - When marked "paid" → table freed → status "available"
+
+- calculates total
+- inserts into orders (status: "pending")
+- inserts into orderItems (with notes)
+- patches table → "occupied"
+          ↓
+  Admin Orders page shows real-time updates
+- Stats cards per status
+- Full table with items + notes
+- "Mark →" button advances status
+- When marked "paid" → table freed → status "available"
 
 ### 💳 Payment System
+
 - Cash and Card payment methods
 - Payment records stored in DB
 - Auto-frees table on payment completion
 - Order marked as paid
 
 ---
-## Payment process 
 
-  Order status: "pending"
-  → Cashier clicks "Pay Now"
-  → PaymentModal opens
-  → Selects Cash or Card
-  → Clicks "Process Payment"
-        ↓
-  Payment saved to DB
-  Order → "paid"
-  Table → "available"
-        ↓
-  Success screen shows ✅
-  Receipt preview appears
-  → Clicks "Print Receipt"
-        ↓
-  Browser print dialog opens
-  Thermal-style receipt prints
-  Updates table → status: "available"
-        ↓
-  Toast: "Payment processed!"
-  Modal closes
-  Table turns green ✅
-  Order disappears from active list ✅
+## Payment process
+
+Order status: "pending"
+→ Cashier clicks "Pay Now"
+→ PaymentModal opens
+→ Selects Cash or Card
+→ Clicks "Process Payment"
+↓
+Payment saved to DB
+Order → "paid"
+Table → "available"
+↓
+Success screen shows ✅
+Receipt preview appears
+→ Clicks "Print Receipt"
+↓
+Browser print dialog opens
+Thermal-style receipt prints
+Updates table → status: "available"
+↓
+Toast: "Payment processed!"
+Modal closes
+Table turns green ✅
+Order disappears from active list ✅
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 14 (App Router) + TypeScript |
-| Backend | Convex (DB + Mutations + Queries) |
-| Auth | Clerk + Convex JWT |
-| Styling | Tailwind CSS + shadcn/ui |
-| State | Zustand (per-table cart) |
-| Forms | react-hook-form + zod |
-| Notifications | Sonner (toast) |
+| Layer         | Technology                           |
+| ------------- | ------------------------------------ |
+| Frontend      | Next.js 14 (App Router) + TypeScript |
+| Backend       | Convex (DB + Mutations + Queries)    |
+| Auth          | Clerk + Convex JWT                   |
+| Styling       | Tailwind CSS + shadcn/ui             |
+| State         | Zustand (per-table cart)             |
+| Forms         | react-hook-form + zod                |
+| Notifications | Sonner (toast)                       |
 
 ---
 
@@ -138,7 +140,7 @@ app/
 │   ├── admin/page.tsx         # Admin dashboard
 │   ├── cashier/page.tsx       # Cashier POS screen
 │   └── unauthorized/page.tsx  # Access denied
-│  
+│
 ├── _components/
 │   ├── AdminPage/
 │   │   ├── Dashboard.tsx
@@ -152,7 +154,7 @@ app/
 │       ├── EditOrderModal.tsx
 │       └── PaymentModal.tsx
 │       └── MyOrders.tsx
-│   
+│
 
 convex/
 ├── schema.ts
@@ -176,21 +178,19 @@ stores/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - Convex account
 - Clerk account
 
-
 ## 👥 Role Access Matrix
 
-| Route | Admin | Cashier | 
-|  ---  |  ---  |   ---   |
-| `/admin` | ✅ |   ❌   | 
-| `/cashier` | ✅ | ✅   | 
-| `/`    |  ✅   |  ✅   | 
-
+| Route      | Admin | Cashier |
+| ---------- | ----- | ------- |
+| `/admin`   | ✅    | ❌      |
+| `/cashier` | ✅    | ✅      |
+| `/`        | ✅    | ✅      |
 
 ---
 
 Built with ❤️ using Next.js, Convex, and Clerk.
-
