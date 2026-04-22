@@ -80,14 +80,21 @@ Admin Orders page shows real-time updates
 
   Order status: "pending"
   → Cashier clicks "Pay Now"
-  → PaymentModal opens with total
-  → Cashier selects Cash or Card
+  → PaymentModal opens
+  → Selects Cash or Card
   → Clicks "Process Payment"
         ↓
-  processPayment mutation:
-    1. Creates payment record in DB
-    2. Updates order → status: "paid"
-    3. Updates table → status: "available"
+  Payment saved to DB
+  Order → "paid"
+  Table → "available"
+        ↓
+  Success screen shows ✅
+  Receipt preview appears
+  → Clicks "Print Receipt"
+        ↓
+  Browser print dialog opens
+  Thermal-style receipt prints
+  Updates table → status: "available"
         ↓
   Toast: "Payment processed!"
   Modal closes

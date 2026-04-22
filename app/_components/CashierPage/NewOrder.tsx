@@ -39,6 +39,7 @@ function NewOrder() {
     const [paymentOpen, setPaymentOpen] = useState(false);
     const [payingOrderId, setPayingOrderId] = useState<Id<"orders"> | null>(null);
     const [payingTotal, setPayingTotal] = useState(0);
+    const [payingOrder, setPayingOrder] = useState<any>(null);
 
     const data = useQuery(api.menuItems.getMenu);
     const tables = useQuery(api.tables.getTables);
@@ -110,6 +111,7 @@ function NewOrder() {
     const handleOpenPayment = (order: any) => {
         setPayingOrderId(order._id as Id<"orders">);
         setPayingTotal(order.total);
+        setPayingOrder(order); // ← add this state
         setPaymentOpen(true);
     };
 
@@ -507,13 +509,25 @@ function NewOrder() {
                     setPaymentOpen(false);
                     setPayingOrderId(null);
                     setPayingTotal(0);
+                    setPayingOrder(null);
                 }}
                 total={payingTotal}
                 orderId={payingOrderId}
+                orderNumber={String(
+                    (orders?.findIndex(o => o._id === payingOrderId) ?? 0) + 1
+                ).padStart(4, "0")}
+                tableName={payingOrder?.tableName ?? ""}
+                cashierName={currentUser?.name ?? "Cashier"}
+                items={payingOrder?.items?.map((i: any) => ({
+                    name: i.menuItemName,
+                    quantity: i.quantity,
+                    price: i.menuItemPrice,
+                })) ?? []}
                 onSuccess={() => {
-                    setPayingOrderId(null);
-                    setPayingTotal(0);
-                    clearCart(activeTable ?? "");
+                    // setPayingOrderId(null);
+                    // setPayingTotal(0);
+                    // setPayingOrder(null);
+                    // clearCart(activeTable ?? "");
                 }}
             />
         </>

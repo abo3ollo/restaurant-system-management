@@ -65,7 +65,7 @@ export default function CashierScreen() {
     const orders = currentUser?.role === "admin"
         ? allOrders
         : allOrders?.filter(o => o.userId === currentUser?._id);
-        console.log(orders?.length);
+        // console.log(orders?.length);
         
 
     const activeOrders = orders?.filter(o => o.status !== "paid") ?? [];
