@@ -39,9 +39,10 @@ export default defineSchema({
     }),
 
     // convex/schema.ts
+    // In your schema definition (convex/schema.ts)
     orders: defineTable({
         tableId: v.id("tables"),
-        userId: v.id("users"),
+        userId: v.id("users"), // cashier ID
         status: v.union(
             v.literal("pending"),
             v.literal("confirmed"),
@@ -51,7 +52,14 @@ export default defineSchema({
         ),
         total: v.number(),
         createdAt: v.number(),
-    }),
+        paymentMethod: v.optional(
+            v.union(
+                v.literal("cash"),
+                v.literal("card"),
+                v.literal("mobile_payment"),
+            ),
+        ), // ADD THIS
+    }).index("by_userId", ["userId"]),
 
     orderItems: defineTable({
         orderId: v.id("orders"),

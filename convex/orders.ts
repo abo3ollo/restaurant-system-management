@@ -60,10 +60,26 @@ export const getOrders = query({
             .order("desc")
             .collect();
 
-        // Join table name and order items
+        // Get all unique user IDs and fetch their names
+        const userIds = [...new Set(orders.map(o => o.userId))];
+        const users = await Promise.all(
+            userIds.map(async (id) => {
+                const user = await ctx.db.get(id);
+                return { id, name: user?.name ?? "Unknown Cashier" };
+            })
+        );
+        const userMap = new Map(users.map(u => [u.id, u.name]));
+
         const ordersWithDetails = await Promise.all(
             orders.map(async (order) => {
                 const table = await ctx.db.get(order.tableId);
+                
+                // Get payment method
+                const payment = await ctx.db
+                    .query("payments")
+                    .filter((q) => q.eq(q.field("orderId"), order._id))
+                    .first();
+                
                 const items = await ctx.db
                     .query("orderItems")
                     .filter((q) => q.eq(q.field("orderId"), order._id))
@@ -83,6 +99,8 @@ export const getOrders = query({
                 return {
                     ...order,
                     tableName: table?.name ?? "Unknown",
+                    cashierName: userMap.get(order.userId) ?? "Unknown Cashier",
+                    paymentMethod: payment?.method ?? order.paymentMethod ?? "pending",
                     items: itemsWithDetails,
                 };
             })

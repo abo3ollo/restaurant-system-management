@@ -20,6 +20,8 @@ const STATUS_FLOW = ["pending", "confirmed", "preparing", "served", "paid"] as c
 
 export default function Orders() {
     const orders = useQuery(api.orders.getOrders);
+    console.log(orders);
+    
     const updateStatus = useMutation(api.orders.updateOrderStatus);
 
     const getNextStatus = (current: string) => {
@@ -77,7 +79,9 @@ export default function Orders() {
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Order</th>
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Table</th>
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Items</th>
+                            <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Cashier</th>
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Total</th>
+                            <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Payment Method</th>
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Status</th>
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Time</th>
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Action</th>
@@ -124,8 +128,22 @@ export default function Orders() {
 
                                     {/* Total */}
                                     <td className="px-6 py-4">
+                                        <span className="text-sm font-bold text-neutral-500 ">
+                                            {order.cashierName}
+                                        </span>
+                                    </td>
+
+                                    {/* Total */}
+                                    <td className="px-6 py-4">
                                         <span className="text-sm font-black text-indigo-600">
                                             ${order.total.toFixed(2)}
+                                        </span>
+                                    </td>
+
+                                    {/* Paymnt Method */}
+                                    <td className="px-6 py-4">
+                                        <span className="text-sm font-bold text-neutral-500 ms-8 ">
+                                            {order.paymentMethod}
                                         </span>
                                     </td>
 
