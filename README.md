@@ -5,7 +5,7 @@
 - [done] Payment flow (Pay Now button)
 - [done] Reports / analytics dashboard
 - [ ] Real-time order updates with Convex subscriptions
-- [ ] Print receipt feature
+- [done] Print receipt feature
 - [ ] Search menu items
 - [ ] Low stock alerts
 <!-- ///////////////////////////////////// -->
