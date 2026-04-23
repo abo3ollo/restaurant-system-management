@@ -11,6 +11,7 @@
 import type * as menuItems from "../menuItems.js";
 import type * as orders from "../orders.js";
 import type * as payments from "../payments.js";
+import type * as shifts from "../shifts.js";
 import type * as tables from "../tables.js";
 import type * as users from "../users.js";
 
@@ -24,6 +25,7 @@ declare const fullApi: ApiFromModules<{
   menuItems: typeof menuItems;
   orders: typeof orders;
   payments: typeof payments;
+  shifts: typeof shifts;
   tables: typeof tables;
   users: typeof users;
 }>;

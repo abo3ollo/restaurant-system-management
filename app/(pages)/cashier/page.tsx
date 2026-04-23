@@ -23,6 +23,7 @@ import MyOrders from "@/app/_components/CashierPage/MyOrders";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import NewOrder from "@/app/_components/CashierPage/NewOrder";
 import DashboardCashier from "@/app/_components/CashierPage/DashboardCashier";
+import CashierDashboard from "@/app/_components/CashierPage/DashboardCashier";
 
 
 export default function CashierScreen() {
@@ -32,12 +33,12 @@ export default function CashierScreen() {
     // All hooks before conditional returns
     const [activeTab, setActiveTab] = useState<"new-order" | "my-orders" | "dashboard">("new-order");
     const [activeTable, setActiveTable] = useState<string | null>(null);
-    
 
-    
+
+
     const tables = useQuery(api.tables.getTables);
     const allOrders = useQuery(api.orders.getOrders);
-    
+
 
 
     const { getCart } = useCart();
@@ -47,7 +48,7 @@ export default function CashierScreen() {
             setActiveTable(tables[0]._id);
         }
     }, [tables, activeTable]);
-    
+
 
     if (isLoading) return (
         <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
@@ -65,12 +66,12 @@ export default function CashierScreen() {
     const orders = currentUser?.role === "admin"
         ? allOrders
         : allOrders?.filter(o => o.userId === currentUser?._id);
-        // console.log(orders?.length);
-        
+    // console.log(orders?.length);
+
 
     const activeOrders = orders?.filter(o => o.status !== "paid") ?? [];
 
-    
+
 
     return (
         <div className="flex h-screen bg-[#F5F5F3] overflow-hidden" style={{ fontFamily: "'DM Sans','Inter',sans-serif" }}>
@@ -133,14 +134,18 @@ export default function CashierScreen() {
                     </button>
                 </div>
 
-                
+
 
             </div>
 
             {/* ── MAIN CONTENT ── */}
             {activeTab === "new-order" && <NewOrder />}
-            {activeTab === "my-orders" && <MyOrders orders={orders ||[]} />}
-            {activeTab === "dashboard" && <DashboardCashier />}
+            {activeTab === "my-orders" && <MyOrders orders={orders || []} />}
+            {activeTab === "dashboard" && (
+                <div className="flex-1 overflow-y-auto">
+                    <CashierDashboard currentUser={currentUser} />
+                </div>
+            )}
         </div>
     );
 }

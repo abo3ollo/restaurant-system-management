@@ -38,7 +38,6 @@ export default defineSchema({
         isDeleted: v.optional(v.boolean()),
     }),
 
-    // convex/schema.ts
     // In your schema definition (convex/schema.ts)
     orders: defineTable({
         tableId: v.id("tables"),
@@ -76,4 +75,13 @@ export default defineSchema({
         status: v.union(v.literal("pending"), v.literal("completed")),
         createdAt: v.number(),
     }),
+
+    shifts: defineTable({
+        cashierId: v.id("users"),
+        startTime: v.number(),
+        endTime: v.optional(v.number()),
+        totalOrders: v.optional(v.number()),
+        totalRevenue: v.optional(v.number()),
+        status: v.union(v.literal("open"), v.literal("closed")),
+    }).index("by_cashier", ["cashierId"]),
 });
