@@ -7,6 +7,7 @@ import {
     BarChart2, Users, Settings, HelpCircle, Bell, TrendingUp,
     TrendingDown, DollarSign, ShoppingBag, Star, ArrowUpRight,
     LogOut, ChevronRight,
+    Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MenuItems from "@/app/_components/AdminPage/menuItems";
@@ -18,10 +19,13 @@ import { SignInButton, SignUpButton, useAuth, useClerk, UserButton } from "@cler
 import { Button } from "@/components/ui/button";
 import Orders from "@/app/_components/AdminPage/Orders";
 import Reports from "@/app/_components/AdminPage/Reports";
+import TablesManagement from "@/app/_components/AdminPage/TablesManagement";
+import CategoriesManagement from "@/app/_components/AdminPage/CategoriesManagement";
 
 const NAV = [
-    { label: "Dashboard", icon: LayoutDashboard, active: true },
-    // { label: "Tables", icon: UtensilsCrossed },
+    { label: "Dashboard", icon: LayoutDashboard },
+    { label: "Tables", icon: UtensilsCrossed },
+    { label: "Categories", icon: Tag },
     { label: "Orders", icon: ClipboardList },
     { label: "Menu", icon: BookOpen },
     { label: "Reports", icon: BarChart2 },
@@ -137,6 +141,8 @@ export default function AdminDashboard() {
 
                 <div className="flex-1 overflow-y-auto p-8">
                     {activeNav === "Dashboard" && <Dashboard />}
+                    {activeNav === "Tables" && <TablesManagement />}
+                    {activeNav === "Categories" && <CategoriesManagement />}
                     {activeNav === "Menu" && <MenuItems />}
                     {activeNav === "Users" && <UserManagement />}
                     {activeNav === "Orders" && <Orders />}
