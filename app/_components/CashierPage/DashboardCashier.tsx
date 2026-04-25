@@ -191,6 +191,18 @@ export default function CashierDashboard({ currentUser, onCloseShift }: Props) {
                     >
                       {order.status}
                     </span>
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold px-2 py-1 rounded-lg uppercase",
+                        order.paymentMethod === "cash"
+                          ? "bg-green-100 text-green-700"
+                          : order.paymentMethod === "card"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-yellow-100 text-yellow-700",
+                      )}
+                    >
+                      {order.paymentMethod || "N/A"}
+                    </span>
                     <span className="text-sm font-black text-amber-600 w-16 text-right">
                       ${order.total.toFixed(2)}
                     </span>

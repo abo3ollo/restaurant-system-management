@@ -113,6 +113,8 @@ function NewOrder() {
         setPayingTotal(order.total);
         setPayingOrder(order); // ← add this state
         setPaymentOpen(true);
+        clearCart(activeTable ?? ""); // Clear cart when opening payment modal
+        
     };
 
     const categoryMap = new Map((data?.categories || []).map((c: any) => [c._id, c.name]));

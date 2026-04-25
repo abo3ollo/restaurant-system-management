@@ -21,6 +21,7 @@ type ShiftSummary = {
     expectedBalance: number;
     difference: number;
     cashSalesTotal: number;
+    cardSalesTotal: number;  // ← add
     totalOrders: number;
     paidOrders: number;
     totalRevenue: number;
@@ -75,7 +76,7 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                 closingBalance: amount,
                 notes: notes || undefined,
             });
-             console.log("closeShift result:", result); 
+            console.log("closeShift result:", result);
             setSummary(result);
             setStep(2);
         } catch (err: any) {
@@ -192,8 +193,8 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                         <div className={cn(
                             "px-6 py-6",
                             summary.difference < 0 ? "bg-red-600" :
-                            summary.difference > 0 ? "bg-amber-500" :
-                            "bg-green-600"
+                                summary.difference > 0 ? "bg-amber-500" :
+                                    "bg-green-600"
                         )}>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -211,8 +212,8 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                                     </p>
                                     <h2 className="text-lg font-black text-white">
                                         {summary.difference < 0 ? `Shortage: $${Math.abs(summary.difference).toFixed(2)}` :
-                                         summary.difference > 0 ? `Overage: +$${summary.difference.toFixed(2)}` :
-                                         "Balanced ✓"}
+                                            summary.difference > 0 ? `Overage: +$${summary.difference.toFixed(2)}` :
+                                                "Balanced ✓"}
                                     </h2>
                                 </div>
                             </div>
@@ -255,7 +256,7 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
 
                                 {/* Cash Breakdown */}
                                 <div className="bg-neutral-50 rounded-2xl p-4 space-y-2">
-                                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-3">
+                                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widests mb-3">
                                         Cash Drawer
                                     </p>
                                     <div className="flex justify-between text-sm">
@@ -263,11 +264,19 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                                         <span className="font-bold">${summary.openingBalance.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-neutral-500">Cash Sales</span>
+                                        <span className="text-neutral-500">💵 Cash Sales</span>
                                         <span className="font-bold text-green-600">+${summary.cashSalesTotal.toFixed(2)}</span>
                                     </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-neutral-500">💳 Card Sales</span>
+                                        <span className="font-bold text-blue-600">${summary.cardSalesTotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-neutral-500">Total Revenue</span>
+                                        <span className="font-bold text-indigo-600">${summary.totalRevenue.toFixed(2)}</span>
+                                    </div>
                                     <div className="flex justify-between text-sm border-t border-neutral-200 pt-2">
-                                        <span className="text-neutral-500">Expected</span>
+                                        <span className="text-neutral-500">Expected in Drawer</span>
                                         <span className="font-black">${summary.expectedBalance.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
@@ -277,12 +286,12 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                                     <div className={cn(
                                         "flex justify-between text-sm font-black rounded-xl px-3 py-2 mt-1",
                                         summary.difference < 0 ? "bg-red-50 text-red-600" :
-                                        summary.difference > 0 ? "bg-amber-50 text-amber-600" :
-                                        "bg-green-50 text-green-600"
+                                            summary.difference > 0 ? "bg-amber-50 text-amber-600" :
+                                                "bg-green-50 text-green-600"
                                     )}>
                                         <span>
                                             {summary.difference < 0 ? "⚠️ Shortage" :
-                                             summary.difference > 0 ? "📈 Overage" : "✅ Exact"}
+                                                summary.difference > 0 ? "📈 Overage" : "✅ Exact"}
                                         </span>
                                         <span>
                                             {summary.difference !== 0 && (summary.difference < 0 ? "-" : "+")}

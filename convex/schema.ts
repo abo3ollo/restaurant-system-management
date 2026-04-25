@@ -85,6 +85,7 @@ export default defineSchema({
         expectedBalance: v.optional(v.number()),
         difference: v.optional(v.number()),
         cashSalesTotal: v.optional(v.number()),
+        cardSalesTotal: v.optional(v.number()),
         totalOrders: v.optional(v.number()),
         totalRevenue: v.optional(v.number()),
         status: v.union(v.literal("open"), v.literal("closed")),
