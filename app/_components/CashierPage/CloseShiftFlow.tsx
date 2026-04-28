@@ -21,7 +21,7 @@ type ShiftSummary = {
     expectedBalance: number;
     difference: number;
     cashSalesTotal: number;
-    cardSalesTotal: number;  // ← add
+    cardSalesTotal: number;
     totalOrders: number;
     paidOrders: number;
     totalRevenue: number;
@@ -61,7 +61,11 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
 
     const handlePrint = useReactToPrint({
         contentRef: receiptRef,
-        documentTitle: `Shift-Receipt-${summary?.cashierName}`,
+        documentTitle: `Shift-Receipt-${summary?.cashierName || "shift"}`,
+        onPrintError: (error) => {
+            console.error("Print error:", error);
+            toast.error("Failed to print receipt. Please try again.");
+        },
     });
 
     const handleNext = async () => {
@@ -77,9 +81,16 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                 notes: notes || undefined,
             });
             console.log("closeShift result:", result);
+            
+            if (!result) {
+                throw new Error("No data returned from shift closing");
+            }
+            
             setSummary(result);
             setStep(2);
+            toast.success("Shift closed successfully!");
         } catch (err: any) {
+            console.error("Close shift error:", err);
             toast.error(err.message ?? "Failed to close shift");
         } finally {
             setLoading(false);
@@ -151,7 +162,7 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
 
                             {/* Notes */}
                             <div>
-                                <label className="text-[11px] font-bold tracking-widests text-neutral-400 uppercase block mb-2">
+                                <label className="text-[11px] font-bold tracking-widest text-neutral-400 uppercase block mb-2">
                                     Notes (optional)
                                 </label>
                                 <textarea
@@ -224,10 +235,9 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                             </div>
                         </div>
 
-                        {/* Printable Receipt */}
-                        <div className="max-h-96 overflow-y-auto">
-                            <div ref={receiptRef} className="px-6 py-4 space-y-4">
-
+                        {/* Printable Receipt - REMOVED scroll container */}
+                        <div className="px-6 py-4">
+                            <div ref={receiptRef} className="space-y-4">
                                 {/* Cashier + Time */}
                                 <div className="bg-neutral-50 rounded-2xl p-4 space-y-2">
                                     <div className="flex justify-between text-sm">
@@ -256,7 +266,7 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
 
                                 {/* Cash Breakdown */}
                                 <div className="bg-neutral-50 rounded-2xl p-4 space-y-2">
-                                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widests mb-3">
+                                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-3">
                                         Cash Drawer
                                     </p>
                                     <div className="flex justify-between text-sm">

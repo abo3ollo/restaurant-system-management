@@ -1,9 +1,14 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getRestaurantContext } from "./context";
 
 export const getTables = query({
     handler: async (ctx) => {
-        return await ctx.db.query("tables").collect();
+        const { restaurantId } = await getRestaurantContext(ctx);
+        return await ctx.db
+            .query("tables")
+            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .collect();
     },
 });
 
@@ -18,17 +23,10 @@ export const addTable = mutation({
         ),
     },
     handler: async (ctx, args) => {
-        // Check duplicate name
-        const existing = await ctx.db
-            .query("tables")
-            .filter(q => q.eq(q.field("name"), args.name))
-            .first();
-        if (existing) throw new Error("Table name already exists");
-
+        const { restaurantId } = await getRestaurantContext(ctx);
         return await ctx.db.insert("tables", {
-            name: args.name,
-            capacity: args.capacity,
-            status: args.status,
+            ...args,
+            restaurantId,
         });
     },
 });
@@ -53,7 +51,6 @@ export const updateTable = mutation({
 export const deleteTable = mutation({
     args: { id: v.id("tables") },
     handler: async (ctx, args) => {
-        // Check if table has active orders
         const activeOrder = await ctx.db
             .query("orders")
             .filter(q =>
@@ -63,9 +60,7 @@ export const deleteTable = mutation({
                 )
             )
             .first();
-
         if (activeOrder) throw new Error("Cannot delete table with active orders");
-
         return await ctx.db.delete(args.id);
     },
 });

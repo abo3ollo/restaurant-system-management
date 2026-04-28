@@ -19,18 +19,15 @@ function UserSync() {
             clerkId: user.id,
             name: user.fullName ?? user.username ?? "Unknown",
             email: user.emailAddresses[0]?.emailAddress ?? "",
-            role: "cashier", // default role — change in Convex dashboard per user
-        }).catch(error => {
-            console.error("Failed to sync user:", error);
-        });
-    }, [user, upsertUser]);
+        }).catch(console.error);
+    }, [user?.id]);
 
     return null;
 }
 
 export default function ConvexClerkProvider({ children }: { children: React.ReactNode }) {
     return (
-        <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+        <ClerkProvider>
             <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
                 <UserSync />
                 {children}

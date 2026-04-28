@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Shield, DollarSign, UtensilsCrossed, Loader, Check, X } from "lucide-react";
+import { Shield, DollarSign, Loader, AlertCircle, X } from "lucide-react";
 import { format, isToday, isYesterday } from 'date-fns';
 
-type Role = "admin" | "cashier" | "waiter";
+type Role = "admin" | "cashier";
 
 const ROLE_CONFIG: Record<Role, { label: string; color: string; icon: any; bg: string }> = {
     admin: {
@@ -24,33 +24,28 @@ const ROLE_CONFIG: Record<Role, { label: string; color: string; icon: any; bg: s
         icon: DollarSign,
         bg: "bg-emerald-50",
     },
-    waiter: {
-        label: "Waiter",
-        color: "text-amber-600",
-        icon: UtensilsCrossed,
-        bg: "bg-amber-50",
-    },
 };
 
 export default function UserManagement() {
     const users = useQuery(api.users.getAllUsers);
-    console.log(users);
-
     const updateUserRole = useMutation(api.users.updateUserRole);
+    
     const [changingUserId, setChangingUserId] = useState<string | null>(null);
-    const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const handleChangeRole = async (userId: string, newRole: Role) => {
         setChangingUserId(userId);
+        setError(null);
+        
         try {
             await updateUserRole({
-                id: userId as any,
+                userId: userId as any,
                 role: newRole,
             });
-            setChangingUserId(null);
-            setSelectedRole(null);
         } catch (error) {
             console.error("Failed to update role:", error);
+            setError(error instanceof Error ? error.message : "Failed to update role");
+        } finally {
             setChangingUserId(null);
         }
     };
@@ -63,6 +58,20 @@ export default function UserManagement() {
         );
     }
 
+    // Format last login or creation time
+    const formatLastActive = (user: any) => {
+        const timestamp = user.lastLogin || user._creationTime;
+        const date = new Date(timestamp);
+        
+        if (isToday(date)) {
+            return `Today, ${format(date, 'h:mm a')}`;
+        }
+        if (isYesterday(date)) {
+            return `Yesterday, ${format(date, 'h:mm a')}`;
+        }
+        return format(date, 'MMM d, yyyy');
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -70,6 +79,17 @@ export default function UserManagement() {
                 <h2 className="text-lg font-black text-neutral-900">User Management</h2>
                 <p className="text-sm text-neutral-400 mt-1">Manage staff roles and permissions</p>
             </div>
+
+            {/* Error Alert */}
+            {error && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+                    <AlertCircle size={16} />
+                    {error}
+                    <button onClick={() => setError(null)} className="ml-auto">
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
 
             {/* Users Table */}
             <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
@@ -79,14 +99,14 @@ export default function UserManagement() {
                             <tr className="border-b border-neutral-100 bg-neutral-50">
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Name</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Last Login</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Last Active</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Current Role</th>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map((user) => {
-                                const roleConfig = ROLE_CONFIG[user.role];
+                                const roleConfig = ROLE_CONFIG[user.role as Role];
                                 const RoleIcon = roleConfig.icon;
 
                                 return (
@@ -98,13 +118,9 @@ export default function UserManagement() {
                                             <p className="text-sm text-neutral-500">{user.email}</p>
                                         </td>
                                         <td className="px-6 py-4">
-                                           <p className="text-sm text-neutral-500">
-  {isToday(new Date(user._creationTime)) 
-    ? 'Today' 
-    : isYesterday(new Date(user._creationTime)) 
-      ? 'Yesterday' 
-      : format(new Date(user._creationTime), 'EEEE')}, {format(new Date(user._creationTime), 'h:mm a')}
-</p>
+                                            <p className="text-sm text-neutral-500">
+                                                {formatLastActive(user)}
+                                            </p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-bold", roleConfig.bg, roleConfig.color)}>
@@ -113,38 +129,25 @@ export default function UserManagement() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex gap-2">
                                                 {changingUserId === user._id ? (
                                                     <Loader size={16} className="text-neutral-400 animate-spin" />
                                                 ) : (
                                                     <>
-                                                        {selectedRole && changingUserId !== user._id ? (
-                                                            <div className="flex gap-1">
-                                                                {(["admin", "cashier"] as Role[]).map((role) => (
-                                                                    <button
-                                                                        key={role}
-                                                                        onClick={() => {
-                                                                            handleChangeRole(user._id, role);
-                                                                        }}
-                                                                        className={cn(
-                                                                            "px-2 py-1 rounded text-xs font-bold transition-all",
-                                                                            role === user.role
-                                                                                ? "bg-neutral-200 text-neutral-600"
-                                                                                : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"
-                                                                        )}
-                                                                    >
-                                                                        {ROLE_CONFIG[role].label}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => setSelectedRole(user.role)}
-                                                                className="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                                                            >
-                                                                Change Role
-                                                            </button>
-                                                        )}
+                                                        {(["admin", "cashier"] as Role[]).map((role) => (
+                                                            role !== user.role && (
+                                                                <button
+                                                                    key={role}
+                                                                    onClick={() => handleChangeRole(user._id, role)}
+                                                                    className={cn(
+                                                                        "px-2 py-1 rounded text-xs font-bold transition-all",
+                                                                        "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                                                                    )}
+                                                                >
+                                                                    Make {ROLE_CONFIG[role].label}
+                                                                </button>
+                                                            )
+                                                        ))}
                                                     </>
                                                 )}
                                             </div>

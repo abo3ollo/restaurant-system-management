@@ -125,8 +125,8 @@ function NewOrder() {
         ? data?.items?.filter(i => i.available)
         : data?.items?.filter(i =>
             i.available && (
-                i.categoryId === activeCategory ||           // new items with proper ID
-                i.category === selectedCategoryName          // old items with string category
+                i.categoryId === activeCategory           // new items with proper ID
+                // i.category === selectedCategoryName          // old items with string category
             )
         );
 

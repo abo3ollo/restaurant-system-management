@@ -52,7 +52,7 @@ interface EditMenuItemModalProps {
 // ── Component ────────────────────────────────────────────
 export function EditMenuItemModal({ item, open, onOpenChange }: EditMenuItemModalProps) {
     const categories = useQuery(api.menuItems.getMenu);
-    const updateItem = useMutation(api.menuItems.updateMenuItem);
+    const updateItem = useMutation(api.menuItems.editMenuItem);
     const [existingImage, setExistingImage] = useState<string>("");
 
     const form = useForm<FormValues>({

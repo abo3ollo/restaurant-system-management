@@ -57,6 +57,8 @@ function HourTooltip({ active, payload, label }: any) {
 function AnalyticsReport() {
     const [period, setPeriod] = useState<Period>("daily");
     const data = useQuery(api.orders.getReportsData);
+    console.log(data);
+    
 
     if (!data) return (
         <div className="flex items-center justify-center h-64 text-neutral-400">

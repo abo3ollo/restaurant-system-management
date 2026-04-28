@@ -1,88 +1,75 @@
-import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-
-export const get = query({
-    args: {},
-    handler: async (ctx) => {
-        return await ctx.db.query("menuItems").collect();
-    },
-});
+import { v } from "convex/values";
+import { getRestaurantContext } from "./context";
 
 export const getMenu = query({
     handler: async (ctx) => {
-        const items = await ctx.db.query("menuItems").collect();
-        const categories = await ctx.db.query("categories").collect();
+        const { restaurantId } = await getRestaurantContext(ctx);
 
-        const categoryMap = new Map(categories.map((c) => [c._id, c.name]));
+        const items = await ctx.db
+            .query("menuItems")
+            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .collect();
 
-        const itemsWithCategory = items.map((item) => ({
+        const categories = await ctx.db
+            .query("categories")
+            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .collect();
+
+        const categoryMap = new Map(categories.map(c => [c._id, c.name]));
+
+        const itemsWithCategory = items.map(item => ({
             ...item,
             categoryName: item.categoryId
-                ? categoryMap.get(item.categoryId) ?? item.category ?? "Unknown"
-                : item.category ?? "Unknown",
+                ? categoryMap.get(item.categoryId) ?? "Unknown"
+                : "Unknown",
         }));
 
         return { items: itemsWithCategory, categories };
     },
 });
 
-// convex/menuItems.ts
 export const addMenuItem = mutation({
     args: {
         name: v.string(),
         price: v.number(),
         categoryId: v.id("categories"),
-        image: v.string(),
-        description: v.string(),
+        image: v.optional(v.string()),
+        description: v.optional(v.string()),
         available: v.boolean(),
     },
     handler: async (ctx, args) => {
-        // Fetch the category name
-        const category = await ctx.db.get(args.categoryId);
-
-        return await ctx.db.insert("menuItems", {
-            ...args,
-            category: category?.name || "",
-        });
+        const { restaurantId } = await getRestaurantContext(ctx);
+        return await ctx.db.insert("menuItems", { ...args, restaurantId });
     },
 });
 
-export const updateMenuItem = mutation({
+export const editMenuItem = mutation({
     args: {
         id: v.id("menuItems"),
         name: v.string(),
         price: v.number(),
-        description: v.string(),
-        image: v.string(),
         categoryId: v.id("categories"),
+        image: v.optional(v.string()),
+        description: v.optional(v.string()),
         available: v.boolean(),
     },
-
     handler: async (ctx, args) => {
-        // Fetch the category name
-        const category = await ctx.db.get(args.categoryId);
-        
-        await ctx.db.patch(args.id, {
-            name: args.name,
-            price: args.price,
-            available: args.available,
-            description: args.description,
-            image: args.image,
-            categoryId: args.categoryId,
-            category: category?.name || "",
-        });
+        const { id, ...rest } = args;
+        return await ctx.db.patch(id, rest);
     },
 });
 
-
 export const deleteMenuItem = mutation({
-    args: {
-        id: v.id("menuItems"),
-    },
-
+    args: { id: v.id("menuItems") },
     handler: async (ctx, args) => {
-        await ctx.db.patch(args.id, {
-            isDeleted: true,
-        });
+        return await ctx.db.delete(args.id);
+    },
+});
+
+export const toggleAvailability = mutation({
+    args: { id: v.id("menuItems"), available: v.boolean() },
+    handler: async (ctx, args) => {
+        return await ctx.db.patch(args.id, { available: args.available });
     },
 });

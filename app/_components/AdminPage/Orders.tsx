@@ -116,9 +116,9 @@ export default function Orders() {
                                             {order.items.map((item) => (
                                                 <p key={item._id} className="text-xs text-neutral-500">
                                                     {item.quantity}x {item.menuItemName}
-                                                    {item.notes && (
+                                                    {item.note && (
                                                         <span className="text-neutral-400 ml-1 italic">
-                                                            ({item.notes})
+                                                            ({item.note})
                                                         </span>
                                                     )}
                                                 </p>
