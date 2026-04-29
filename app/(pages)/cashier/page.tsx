@@ -16,6 +16,9 @@ export default function CashierPage() {
     const myOrders = useQuery(api.orders.getMyOrders);
     const activeOrders = myOrders?.filter(o => o.status !== "paid") ?? [];
 
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    console.log(restaurant);
+
     return (
         <ShiftGate>
             {(onCloseShift) => (
@@ -29,9 +32,13 @@ export default function CashierPage() {
                         <div className="mb-6 px-2">
                             <div className="flex items-center gap-2 mb-0.5">
                                 <div className="w-7 h-7 rounded-lg bg-neutral-900 flex items-center justify-center">
-                                    <span className="text-white font-black text-sm">f</span>
+                                    <span className="text-white font-black text-sm">
+                                        {restaurant?.name?.charAt(0).toUpperCase() ?? "f"}
+                                    </span>
                                 </div>
-                                <h1 className="text-lg font-black text-neutral-900">foodics</h1>
+                                <h1 className="text-lg font-black tracking-tight text-neutral-900">
+                                    {restaurant?.name ?? "foodics"}
+                                </h1>
                             </div>
                             <p className="text-[10px] tracking-widests text-neutral-400 uppercase pl-9">
                                 Cashier Panel

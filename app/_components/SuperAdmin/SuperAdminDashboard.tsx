@@ -10,6 +10,8 @@ import {
 
 export default function SuperAdminDashboard() {
     const restaurants = useQuery(api.restaurants.getAll);
+    console.log(restaurants);
+    
 
     if (!restaurants) return (
         <div className="flex items-center justify-center h-64 text-neutral-400">

@@ -8,6 +8,7 @@ import {
     TrendingDown, DollarSign, ShoppingBag, Star, ArrowUpRight,
     LogOut, ChevronRight,
     Tag,
+    Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import MenuItems from "@/app/_components/AdminPage/menuItems";
@@ -21,6 +22,8 @@ import Orders from "@/app/_components/AdminPage/Orders";
 import Reports from "@/app/_components/AdminPage/Reports";
 import TablesManagement from "@/app/_components/AdminPage/TablesManagement";
 import CategoriesManagement from "@/app/_components/AdminPage/CategoriesManagement";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 const NAV = [
     { label: "Dashboard", icon: LayoutDashboard },
@@ -42,7 +45,8 @@ export default function AdminDashboard() {
     const { isLoading, currentUser } = useRoleGuard(["admin"]);
     // console.log(currentUser);
     const { isSignedIn } = useAuth()
-
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    console.log(restaurant);
 
     const handleChangeRole = async () => {
         await signOut();
@@ -110,30 +114,50 @@ export default function AdminDashboard() {
                 {/* Topbar */}
                 <header className="h-16 bg-white border-b border-neutral-100 flex items-center px-8 gap-4 shrink-0">
                     <div>
-                        <h2 className="text-base font-black text-neutral-900 leading-tight">Good morning, {currentUser?.name || "Admin"} 👋</h2>
-                        <p className="text-xs text-neutral-400">{new Date().toLocaleDateString()}</p>
+                        <h2 className="text-base font-black text-neutral-900 leading-tight">
+                            Good morning, {currentUser?.name?.split(" ")[0]} 👋
+                        </h2>
+                        <p className="text-xs text-neutral-400">
+                            {new Date().toLocaleDateString("en", {
+                                weekday: "long", year: "numeric",
+                                month: "long", day: "numeric"
+                            })}
+                        </p>
                     </div>
+
                     <div className="ml-auto flex items-center gap-3">
+                        {/* Restaurant name badge */}
+                        {restaurant && (
+                            <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 px-3 py-1.5 rounded-xl">
+                                <Store size={13} className="text-neutral-500" />
+                                <span className="text-xs font-bold text-neutral-700">
+                                    {restaurant.name}
+                                </span>
+                                <span className={cn(
+                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase",
+                                    restaurant.plan === "pro" ? "bg-indigo-100 text-indigo-600" :
+                                        restaurant.plan === "enterprise" ? "bg-purple-100 text-purple-600" :
+                                            "bg-neutral-100 text-neutral-400"
+                                )}>
+                                    {restaurant.plan}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Live badge */}
                         <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-xl">
                             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                             <span className="text-xs font-bold text-indigo-700">Live</span>
                         </div>
+
                         <button className="relative p-2 rounded-xl hover:bg-neutral-50">
                             <Bell size={16} className="text-neutral-500" />
                             <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />
                         </button>
-                        <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xs font-black">{isSignedIn ? (
-                            <UserButton />
-                        ) : (
-                            <div className='hidden lg:flex gap-2'>
-                                <SignInButton mode='modal'>
-                                    <Button variant="ghost" size="sm">Login</Button>
-                                </SignInButton>
-                                <SignUpButton mode='modal'>
-                                    <Button size="sm">Signup</Button>
-                                </SignUpButton>
-                            </div>
-                        )}</div>
+
+                        <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xs font-black">
+                            {currentUser?.name?.charAt(0).toUpperCase()}
+                        </div>
                     </div>
                 </header>
 

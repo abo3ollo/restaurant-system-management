@@ -206,3 +206,19 @@ export const deleteRestaurant = mutation({
         return await ctx.db.delete(args.id);
     },
 });
+
+export const getMyRestaurant = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) return null;
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", q => q.eq("clerkId", identity.subject))
+            .first();
+
+        if (!user?.restaurantId) return null;
+
+        return await ctx.db.get(user.restaurantId);
+    },
+});
