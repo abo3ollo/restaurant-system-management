@@ -10,6 +10,7 @@
 
 import type * as categories from "../categories.js";
 import type * as context from "../context.js";
+import type * as invitations from "../invitations.js";
 import type * as menuItems from "../menuItems.js";
 import type * as orders from "../orders.js";
 import type * as payments from "../payments.js";
@@ -27,6 +28,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   context: typeof context;
+  invitations: typeof invitations;
   menuItems: typeof menuItems;
   orders: typeof orders;
   payments: typeof payments;

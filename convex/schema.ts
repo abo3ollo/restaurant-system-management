@@ -125,4 +125,17 @@ export default defineSchema({
     }).index("by_cashier", ["cashierId"])
         .index("by_restaurant", ["restaurantId"])
         .index("by_restaurant_status", ["restaurantId", "status"]),
+
+    invitations: defineTable({
+        restaurantId: v.id("restaurants"),
+        email: v.string(),
+        role: v.union(v.literal("cashier"), v.literal("waiter"), v.literal("admin")),
+        token: v.string(),
+        status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("expired")),
+        createdAt: v.number(),
+        expiresAt: v.number(),
+    })
+        .index("by_token", ["token"])
+        .index("by_restaurant", ["restaurantId"])
+        .index("by_email", ["email"]),
 });

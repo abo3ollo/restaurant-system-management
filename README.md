@@ -42,6 +42,34 @@ A full-stack, real-time Point of Sale system built for restaurants. Manage table
 - Orders management with status updates
 - Reports & Analytics Dashboard (Daily/weekly/monthly revenue charts, Top selling items, Busiest hours heatmap, Export to CSV/PDF)
 
+### Admin Invitation
+
+Admin → User Management → Invite Staff
+  → enters email + role
+  → createInvitation mutation
+  → token generated (32 chars)
+  → invite URL shown: /join?token=abc123
+  → Admin copies and shares link
+
+Staff opens /join?token=abc123
+  → sees invitation details (restaurant, role, expires)
+  → Not signed in → Clerk SignIn shown
+  → Signs in/up with Clerk
+  → acceptInvitation mutation runs:
+      - finds invitation by token
+      - creates/updates user with restaurantId + role
+      - marks invitation as "accepted"
+  → redirects to /cashier or /waiter ✅
+
+Admin can:
+  → see all invitations (pending/accepted/expired)
+  → copy link again if staff lost it
+  → resend expired invitations
+  → delete invitations
+  → remove staff members
+  → change staff roles
+
+
 ### 💰 Cashier Screen
 
 - Live table selection with status indicators (free/busy)
