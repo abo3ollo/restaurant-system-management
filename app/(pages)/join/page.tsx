@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { useUser, SignIn } from "@clerk/nextjs";
@@ -17,7 +17,7 @@ const ROLE_CONFIG = {
     admin:   { label: "Admin",   color: "text-indigo-600", bg: "bg-indigo-50" },
 };
 
-export default function JoinPage() {
+export function JoinPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get("token") ?? "";
@@ -257,5 +257,18 @@ function ErrorScreen({ message }: { message: string }) {
                 </button>
             </div>
         </div>
+    );
+}
+
+
+export default function JoinPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#F7F6F3] flex items-center justify-center">
+                <Loader2 size={24} className="animate-spin text-neutral-400" />
+            </div>
+        }>
+            <JoinPageContent />
+        </Suspense>
     );
 }
