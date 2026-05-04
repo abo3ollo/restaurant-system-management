@@ -27,7 +27,7 @@ export function useRoleGuard(allowedRoles: AllowedRole[]) {
 
     // Others need restaurantId
     if (!currentUser.restaurantId) {
-        router.replace("/register");
+        router.replace("/");
         return;
     }
 

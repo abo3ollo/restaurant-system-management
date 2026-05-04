@@ -48,7 +48,7 @@ export default function AdminDashboard() {
     const restaurant = useQuery(api.restaurants.getMyRestaurant);
     console.log(restaurant);
 
-    const handleChangeRole = async () => {
+    const handleSignOut = async () => {
         await signOut();
         router.push("/");
     };
@@ -101,9 +101,9 @@ export default function AdminDashboard() {
                             <Icon size={15} />{label}
                         </button>
                     ))}
-                    <button onClick={handleChangeRole}
+                    <button onClick={handleSignOut}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase text-red-400 hover:bg-red-50 hover:text-red-600 transition-all mt-1">
-                        <LogOut size={15} /> Change Role
+                        <LogOut size={15} /> Sign out
                     </button>
                 </div>
             </aside>
