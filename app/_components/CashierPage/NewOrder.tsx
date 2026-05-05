@@ -270,11 +270,11 @@ function NewOrder() {
                     <div className="flex items-center justify-between mb-3">
                         <div>
                             <h2 className="text-sm font-black text-neutral-900">
-                                {orderType === "dine_in" 
+                                {orderType === "dine_in"
                                     ? (tables?.find((t) => t._id === activeTable)?.name ?? "Select a table")
                                     : orderType === "takeaway"
-                                    ? "Takeaway Order"
-                                    : "Delivery Order"
+                                        ? "Takeaway Order"
+                                        : "Delivery Order"
                                 }
                             </h2>
                             <p className="text-xs text-neutral-400">Tap items to add to order</p>
@@ -365,13 +365,6 @@ function NewOrder() {
                             User: {currentUser?.name || "Cashier"}
                         </p>
                     </div>
-                    <button
-                        onClick={handleChangeRole}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                        <LogOut size={13} />
-                        Change Role
-                    </button>
                 </div>
 
                 {/* Table badge */}
@@ -383,7 +376,13 @@ function NewOrder() {
                         <p className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider">
                             {orderType === "dine_in" ? "Current Table" : orderType === "takeaway" ? "Order Type" : "Delivery Info"}
                         </p>
-                        <p className="text-sm font-black text-neutral-800">{currentTableName}</p>
+                        <p className="text-sm font-black text-neutral-800">
+                            {orderType === "dine_in"
+                                ? currentTableName
+                                : orderType === "takeaway"
+                                    ? "Takeaway"
+                                    : "Delivery"}
+                        </p>
                     </div>
                 </div>
 
