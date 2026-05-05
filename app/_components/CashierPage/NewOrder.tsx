@@ -20,11 +20,14 @@ import {
     CheckCircle,
     CreditCard,
     Pencil,
+    X,
 } from "lucide-react";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import PaymentModal from "./PaymentModal";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 
 function NewOrder() {
@@ -40,6 +43,15 @@ function NewOrder() {
     const [payingOrderId, setPayingOrderId] = useState<Id<"orders"> | null>(null);
     const [payingTotal, setPayingTotal] = useState(0);
     const [payingOrder, setPayingOrder] = useState<any>(null);
+    const [orderType, setOrderType] = useState<"dine_in" | "takeaway" | "delivery">("dine_in");
+    const [deliveryFormOpen, setDeliveryFormOpen] = useState(false);
+    const [deliveryDetails, setDeliveryDetails] = useState({
+        clientName: "",
+        phoneNumber: "",
+        address: "",
+        floorNumber: "",
+        apartment: "",
+    });
 
     const data = useQuery(api.menuItems.getMenu);
     const tables = useQuery(api.tables.getTables);
@@ -114,7 +126,7 @@ function NewOrder() {
         setPayingOrder(order); // ← add this state
         setPaymentOpen(true);
         clearCart(activeTable ?? ""); // Clear cart when opening payment modal
-        
+
     };
 
     const categoryMap = new Map((data?.categories || []).map((c: any) => [c._id, c.name]));
@@ -142,58 +154,128 @@ function NewOrder() {
         ? allOrders
         : allOrders?.filter((o) => o.userId === currentUser?._id);
 
-    const activeTableOrders = orders?.filter(
-        (o) => o.tableId === activeTable && o.status !== "paid"
-    ) ?? [];
+    const activeTableOrders = orders?.filter((o) => {
+        if (o.status === "paid") return false;
+        if (orderType === "dine_in") {
+            return o.tableId === activeTable;
+        } else {
+            return o.orderType === orderType;
+        }
+    }) ?? [];
+
+    const ORDER_TYPES = [
+        {
+            key: "dine_in",
+            label: "Dine In",
+            emoji: "🍽️",
+            desc: "Restaurant hall",
+            color: "border-indigo-300 bg-indigo-50 text-indigo-700",
+            activeColor: "ring-2 ring-indigo-400",
+        },
+        {
+            key: "takeaway",
+            label: "Takeaway",
+            emoji: "🥡",
+            desc: "Customer picks up",
+            color: "border-amber-300 bg-amber-50 text-amber-700",
+            activeColor: "ring-2 ring-amber-400",
+        },
+        {
+            key: "delivery",
+            label: "Delivery",
+            emoji: "🛵",
+            desc: "Deliver to address",
+            color: "border-green-300 bg-green-50 text-green-700",
+            activeColor: "ring-2 ring-green-400",
+        },
+    ];
 
     const payableOrder = activeTableOrders.find((o) => o.status !== "paid");
 
     return (
         <>
             {/* ── TABLES PANEL ── */}
-            <div className="w-60 shrink-0 bg-white border-l border-neutral-100 flex flex-col pt-5">
-                {activeTab === "new-order" && (
-                    <>
-                        <p className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-3 px-1">
-                            Select Table
-                        </p>
-                        <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0">
-                            {tables?.map((table) => {
-                                const tableCart = getCart(table._id);
-                                const isBusy = table.status === "occupied" || tableCart.length > 0;
-                                return (
-                                    <button
-                                        key={table._id}
-                                        onClick={() => setActiveTable(table._id)}
-                                        className={cn(
-                                            "text-left rounded-2xl p-3 border transition-all",
-                                            activeTable === table._id
-                                                ? "border-amber-300 bg-amber-50 shadow-sm"
-                                                : "border-neutral-100 bg-white hover:border-neutral-200",
-                                        )}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm font-bold text-neutral-800">{table.name}</span>
-                                            <span className={cn("w-2 h-2 rounded-full", isBusy ? "bg-red-400" : "bg-green-400")} />
-                                        </div>
-                                        <p className="text-xs text-neutral-400 mt-0.5">
-                                            {table.capacity ? `${table.capacity} Guests` : table.status}
-                                        </p>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </>
-                )}
+            <div className={cn(
+                "w-60 shrink-0 bg-white border-l border-neutral-100 flex flex-col pt-5",
+                orderType !== "dine_in" && "hidden"
+            )}>
+                {/* ... existing tables list ... */}
+                <div className="w-60 shrink-0 bg-white border-l border-neutral-100 flex flex-col pt-5">
+                    {activeTab === "new-order" && (
+                        <>
+                            <p className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-3 px-1">
+                                Select Table
+                            </p>
+                            <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0">
+                                {tables?.map((table) => {
+                                    const tableCart = getCart(table._id);
+                                    const isBusy = table.status === "occupied" || tableCart.length > 0;
+                                    return (
+                                        <button
+                                            key={table._id}
+                                            onClick={() => setActiveTable(table._id)}
+                                            className={cn(
+                                                "text-left rounded-2xl p-3 border transition-all",
+                                                activeTable === table._id
+                                                    ? "border-amber-300 bg-amber-50 shadow-sm"
+                                                    : "border-neutral-100 bg-white hover:border-neutral-200",
+                                            )}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-bold text-neutral-800">{table.name}</span>
+                                                <span className={cn("w-2 h-2 rounded-full", isBusy ? "bg-red-400" : "bg-green-400")} />
+                                            </div>
+                                            <p className="text-xs text-neutral-400 mt-0.5">
+                                                {table.capacity ? `${table.capacity} Guests` : table.status}
+                                            </p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* ── MENU ── */}
             <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Order Type Tabs - Top */}
+                <div className="bg-white border-b border-neutral-100 px-6 py-3 shrink-0">
+                    <div className="flex gap-2">
+                        {ORDER_TYPES.map(t => (
+                            <button
+                                key={t.key}
+                                onClick={() => {
+                                    setOrderType(t.key as any);
+                                    if (t.key === "delivery") {
+                                        setDeliveryFormOpen(true);
+                                    }
+                                }}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-semibold text-sm",
+                                    orderType === t.key
+                                        ? `${t.color} ${t.activeColor} border-current`
+                                        : "border-neutral-100 bg-white hover:border-neutral-200 text-neutral-600"
+                                )}
+                            >
+                                <span className="text-lg">{t.emoji}</span>
+                                {t.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Categories */}
                 <div className="bg-white border-b border-neutral-100 px-6 py-4 shrink-0">
                     <div className="flex items-center justify-between mb-3">
                         <div>
-                            <h2 className="text-base font-black text-neutral-900">
-                                {tables?.find((t) => t._id === activeTable)?.name ?? "Select a table"}
+                            <h2 className="text-sm font-black text-neutral-900">
+                                {orderType === "dine_in" 
+                                    ? (tables?.find((t) => t._id === activeTable)?.name ?? "Select a table")
+                                    : orderType === "takeaway"
+                                    ? "Takeaway Order"
+                                    : "Delivery Order"
+                                }
                             </h2>
                             <p className="text-xs text-neutral-400">Tap items to add to order</p>
                         </div>
@@ -299,7 +381,7 @@ function NewOrder() {
                     </div>
                     <div>
                         <p className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider">
-                            Current Table
+                            {orderType === "dine_in" ? "Current Table" : orderType === "takeaway" ? "Order Type" : "Delivery Info"}
                         </p>
                         <p className="text-sm font-black text-neutral-800">{currentTableName}</p>
                     </div>
@@ -398,6 +480,20 @@ function NewOrder() {
 
                                     {/* Order items */}
                                     <div className="flex flex-col gap-0.5 mb-2">
+                                        {order.orderType === "delivery" && order.deliveryDetails && (
+                                            <div className="mb-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                                                <p className="text-[10px] font-bold text-blue-700 mb-1">DELIVERY INFO</p>
+                                                <p className="text-[10px] text-blue-600"><span className="font-bold">Client:</span> {order.deliveryDetails.clientName}</p>
+                                                <p className="text-[10px] text-blue-600"><span className="font-bold">Phone:</span> {order.deliveryDetails.phoneNumber}</p>
+                                                <p className="text-[10px] text-blue-600"><span className="font-bold">Address:</span> {order.deliveryDetails.address}</p>
+                                                {order.deliveryDetails.floorNumber && (
+                                                    <p className="text-[10px] text-blue-600"><span className="font-bold">Floor:</span> {order.deliveryDetails.floorNumber}</p>
+                                                )}
+                                                {order.deliveryDetails.apartment && (
+                                                    <p className="text-[10px] text-blue-600"><span className="font-bold">Apt:</span> {order.deliveryDetails.apartment}</p>
+                                                )}
+                                            </div>
+                                        )}
                                         {order.items.map((item: any) => (
                                             <p key={item._id} className="text-[11px] text-neutral-500">
                                                 <span className="font-bold">{item.quantity}x</span> {item.menuItemName}
@@ -478,7 +574,15 @@ function NewOrder() {
                                 disabled={cart.length === 0}
                                 onClick={() => {
                                     if (!activeTable || !currentUser?._id) return;
-                                    handleConfirm(activeTable, currentUser._id);
+                                    if (orderType === "delivery") {
+                                        if (!deliveryDetails.clientName || !deliveryDetails.phoneNumber || !deliveryDetails.address) {
+                                            toast.error("Please complete delivery information first");
+                                            return;
+                                        }
+                                        handleConfirm(activeTable, currentUser._id, orderType, deliveryDetails);
+                                    } else {
+                                        handleConfirm(activeTable, currentUser._id, orderType);
+                                    }
                                 }}
                                 variant="outline"
                                 className="w-full rounded-xl h-10 text-xs font-bold tracking-wide border-neutral-200 text-neutral-700 hover:bg-neutral-50"
@@ -520,11 +624,13 @@ function NewOrder() {
                 ).padStart(4, "0")}
                 tableName={payingOrder?.tableName ?? ""}
                 cashierName={currentUser?.name ?? "Cashier"}
+                orderType={payingOrder?.orderType ?? "dine_in"}
                 items={payingOrder?.items?.map((i: any) => ({
                     name: i.menuItemName,
                     quantity: i.quantity,
                     price: i.menuItemPrice,
                 })) ?? []}
+                deliveryDetails={payingOrder?.deliveryDetails}
                 onSuccess={() => {
                     // setPayingOrderId(null);
                     // setPayingTotal(0);
@@ -532,6 +638,111 @@ function NewOrder() {
                     // clearCart(activeTable ?? "");
                 }}
             />
+
+            {/* Delivery Form Modal */}
+            <Dialog open={deliveryFormOpen} onOpenChange={setDeliveryFormOpen}>
+                <DialogContent className="max-w-sm rounded-3xl p-6">
+                    <div>
+                        <h2 className="text-xl font-black text-neutral-900 mb-4">Delivery Information</h2>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs font-bold text-neutral-600 uppercase tracking-wide block mb-1">
+                                    Client Name
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="Enter client name"
+                                    value={deliveryDetails.clientName}
+                                    onChange={(e) =>
+                                        setDeliveryDetails({ ...deliveryDetails, clientName: e.target.value })
+                                    }
+                                    className="rounded-xl border-neutral-200"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-neutral-600 uppercase tracking-wide block mb-1">
+                                    Phone Number
+                                </label>
+                                <Input
+                                    type="tel"
+                                    placeholder="Enter phone number"
+                                    value={deliveryDetails.phoneNumber}
+                                    onChange={(e) =>
+                                        setDeliveryDetails({ ...deliveryDetails, phoneNumber: e.target.value })
+                                    }
+                                    className="rounded-xl border-neutral-200"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-neutral-600 uppercase tracking-wide block mb-1">
+                                    Address
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="Enter street address"
+                                    value={deliveryDetails.address}
+                                    onChange={(e) =>
+                                        setDeliveryDetails({ ...deliveryDetails, address: e.target.value })
+                                    }
+                                    className="rounded-xl border-neutral-200"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-neutral-600 uppercase tracking-wide block mb-1">
+                                        Floor Number
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        placeholder="e.g. 3"
+                                        value={deliveryDetails.floorNumber}
+                                        onChange={(e) =>
+                                            setDeliveryDetails({ ...deliveryDetails, floorNumber: e.target.value })
+                                        }
+                                        className="rounded-xl border-neutral-200"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-neutral-600 uppercase tracking-wide block mb-1">
+                                        Apartment
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        placeholder="e.g. 301"
+                                        value={deliveryDetails.apartment}
+                                        onChange={(e) =>
+                                            setDeliveryDetails({ ...deliveryDetails, apartment: e.target.value })
+                                        }
+                                        className="rounded-xl border-neutral-200"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => setDeliveryFormOpen(false)}
+                                className="flex-1 rounded-full h-11"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    if (!deliveryDetails.clientName || !deliveryDetails.phoneNumber || !deliveryDetails.address) {
+                                        toast.error("Please fill in all required fields");
+                                        return;
+                                    }
+                                    setDeliveryFormOpen(false);
+                                    toast.success("Delivery info saved!");
+                                }}
+                                className="flex-1 rounded-full h-11 bg-neutral-900 hover:bg-neutral-800 text-white font-bold"
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

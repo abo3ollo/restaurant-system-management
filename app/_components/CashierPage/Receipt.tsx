@@ -12,25 +12,45 @@ type ReceiptProps = {
     orderNumber: string;
     tableName: string;
     cashierName: string;
+    orderType: "dine_in" | "takeaway" | "delivery";
     items: ReceiptItem[];
     subtotal: number;
     tax: number;
     total: number;
     paymentMethod: "cash" | "card";
     time: string;
+    deliveryDetails?: {
+        clientName: string;
+        phoneNumber: string;
+        address: string;
+        floorNumber?: string;
+        apartment?: string;
+    };
 };
 
 const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
     orderNumber,
     tableName,
     cashierName,
+    orderType,
     items,
     subtotal,
     tax,
     total,
     paymentMethod,
     time,
+    deliveryDetails,
 }, ref) => {
+    // Get order type label
+    const getOrderTypeLabel = () => {
+        switch (orderType) {
+            case "dine_in": return "DINE IN";
+            case "takeaway": return "TAKEAWAY";
+            case "delivery": return "DELIVERY";
+            default: return "DINE IN";
+        }
+    };
+
     return (
         <div
             ref={ref}
@@ -54,13 +74,43 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
 
             <Divider />
 
+            {/* Order Type */}
+            <div style={{ textAlign: "center", margin: "6px 0" }}>
+                <span style={{ 
+                    fontWeight: "bold", 
+                    fontSize: "14px",
+                    letterSpacing: "2px",
+                }}>
+                    {getOrderTypeLabel()}
+                </span>
+            </div>
+
+            <Divider />
+
             {/* Order Info */}
             <Row label="Cashier" value={cashierName} />
             <Row label="Order" value={`#${orderNumber}`} />
-            <Row label="Table" value={tableName} />
+            <Row label={orderType === "dine_in" ? "Table" : "Type"} value={tableName} />
             <Row label="Time" value={time} />
 
             <Divider />
+
+            {/* Delivery Information */}
+            {orderType === "delivery" && deliveryDetails && (
+                <>
+                    <p style={{ fontWeight: "bold", margin: "4px 0" }}>DELIVERY INFO</p>
+                    <Row label="Client" value={deliveryDetails.clientName} />
+                    <Row label="Phone" value={deliveryDetails.phoneNumber} />
+                    <Row label="Address" value={deliveryDetails.address} />
+                    {deliveryDetails.floorNumber && (
+                        <Row label="Floor" value={deliveryDetails.floorNumber} />
+                    )}
+                    {deliveryDetails.apartment && (
+                        <Row label="Apt" value={deliveryDetails.apartment} />
+                    )}
+                    <Divider />
+                </>
+            )}
 
             {/* Items */}
             <p style={{ fontWeight: "bold", margin: "4px 0" }}>ITEMS</p>

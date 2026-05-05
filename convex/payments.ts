@@ -12,6 +12,11 @@ export const processPayment = mutation({
 
         const order = await ctx.db.get(args.orderId);
         if (!order) throw new Error("Order not found");
+        
+        // Check if order is already paid
+        if (order.status === "paid") {
+            throw new Error("Order is already paid");
+        }
 
         const paymentId = await ctx.db.insert("payments", {
             restaurantId,
@@ -23,7 +28,11 @@ export const processPayment = mutation({
         });
 
         await ctx.db.patch(args.orderId, { status: "paid" });
-        await ctx.db.patch(order.tableId, { status: "available" });
+        
+        // Only update table status for dine-in orders
+        if (order.orderType === "dine_in" && order.tableId) {
+            await ctx.db.patch(order.tableId, { status: "available" });
+        }
 
         return paymentId;
     },
@@ -41,10 +50,31 @@ export const getPayments = query({
 
         return await Promise.all(payments.map(async (payment) => {
             const order = await ctx.db.get(payment.orderId);
-            const table = order ? await ctx.db.get(order.tableId) : null;
+            if (!order) return {
+                ...payment,
+                orderType: "unknown",
+                tableName: "Unknown",
+                orderTypeLabel: "Unknown",
+            };
+            
+            // Handle table based on order type
+            let tableName = "Unknown";
+            if (order.orderType === "dine_in" && order.tableId) {
+                const table = await ctx.db.get(order.tableId);
+                tableName = table?.name ?? "Unknown Table";
+            } else if (order.orderType === "takeaway") {
+                tableName = "Takeaway";
+            } else if (order.orderType === "delivery") {
+                tableName = "Delivery";
+            }
+            
             return {
                 ...payment,
-                tableName: table?.name ?? "Unknown",
+                orderType: order.orderType,
+                orderTypeLabel: order.orderType === "dine_in" ? "Dine In" : 
+                               order.orderType === "takeaway" ? "Takeaway" : "Delivery",
+                tableName,
+                orderTotal: order.total,
             };
         }));
     },

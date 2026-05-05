@@ -73,17 +73,54 @@ export const getRestaurantById = query({
             .withIndex("by_restaurant", q => q.eq("restaurantId", args.id))
             .collect();
 
+        // Recent orders with proper order type handling
         const recentOrders = await Promise.all(
             orders.slice(0, 10).map(async (order) => {
-                const table = await ctx.db.get(order.tableId);
-                return { ...order, tableName: table?.name ?? "Unknown" };
+                let tableName = "Unknown";
+                
+                if (order.orderType === "dine_in" && order.tableId) {
+                    const table = await ctx.db.get(order.tableId);
+                    tableName = table?.name ?? "Unknown Table";
+                } else if (order.orderType === "takeaway") {
+                    tableName = "Takeaway";
+                } else if (order.orderType === "delivery") {
+                    tableName = "Delivery";
+                }
+                
+                return { 
+                    ...order, 
+                    tableName,
+                    orderTypeLabel: order.orderType === "dine_in" ? "Dine In" : 
+                                   order.orderType === "takeaway" ? "Takeaway" : "Delivery",
+                };
             })
         );
 
-        const totalRevenue = orders
-            .filter(o => o.status === "paid")
-            .reduce((sum, o) => sum + o.total, 0);
+        // Revenue calculations by order type
+        const paidOrders = orders.filter(o => o.status === "paid");
+        const totalRevenue = paidOrders.reduce((sum, o) => sum + o.total, 0);
 
+        // Revenue by order type
+        const revenueByOrderType = {
+            dine_in: paidOrders
+                .filter(o => o.orderType === "dine_in")
+                .reduce((sum, o) => sum + o.total, 0),
+            takeaway: paidOrders
+                .filter(o => o.orderType === "takeaway")
+                .reduce((sum, o) => sum + o.total, 0),
+            delivery: paidOrders
+                .filter(o => o.orderType === "delivery")
+                .reduce((sum, o) => sum + o.total, 0),
+        };
+
+        // Order counts by type
+        const orderCountByType = {
+            dine_in: orders.filter(o => o.orderType === "dine_in").length,
+            takeaway: orders.filter(o => o.orderType === "takeaway").length,
+            delivery: orders.filter(o => o.orderType === "delivery").length,
+        };
+
+        // Payment method breakdown
         const cashRevenue = payments
             .filter(p => p.method === "cash")
             .reduce((sum, p) => sum + p.amount, 0);
@@ -92,20 +129,34 @@ export const getRestaurantById = query({
             .filter(p => p.method === "card")
             .reduce((sum, p) => sum + p.amount, 0);
 
-        // Daily revenue last 7 days
-        const dailyRevenue: Record<string, number> = {};
+        // Daily revenue last 7 days with order type breakdown
+        const dailyRevenue: Record<string, {
+            total: number;
+            dine_in: number;
+            takeaway: number;
+            delivery: number;
+        }> = {};
+        
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const key = d.toISOString().split("T")[0];
-            dailyRevenue[key] = 0;
+            dailyRevenue[key] = { total: 0, dine_in: 0, takeaway: 0, delivery: 0 };
         }
-        orders
-            .filter(o => o.status === "paid")
-            .forEach(o => {
-                const key = new Date(o.createdAt).toISOString().split("T")[0];
-                if (key in dailyRevenue) dailyRevenue[key] += o.total;
-            });
+        
+        paidOrders.forEach(order => {
+            const key = new Date(order.createdAt).toISOString().split("T")[0];
+            if (key in dailyRevenue) {
+                dailyRevenue[key].total += order.total;
+                if (order.orderType === "dine_in") {
+                    dailyRevenue[key].dine_in += order.total;
+                } else if (order.orderType === "takeaway") {
+                    dailyRevenue[key].takeaway += order.total;
+                } else if (order.orderType === "delivery") {
+                    dailyRevenue[key].delivery += order.total;
+                }
+            }
+        });
 
         return {
             ...restaurant,
@@ -114,13 +165,18 @@ export const getRestaurantById = query({
             menuItemCount: menuItems.length,
             tableCount: tables.length,
             totalOrders: orders.length,
-            paidOrders: orders.filter(o => o.status === "paid").length,
+            paidOrders: paidOrders.length,
             totalRevenue,
             cashRevenue,
             cardRevenue,
-            dailyRevenue: Object.entries(dailyRevenue).map(([date, revenue]) => ({
+            revenueByOrderType,
+            orderCountByType,
+            dailyRevenue: Object.entries(dailyRevenue).map(([date, data]) => ({
                 label: new Date(date).toLocaleDateString("en", { weekday: "short", month: "short", day: "numeric" }),
-                revenue,
+                revenue: data.total,
+                dine_in: data.dine_in,
+                takeaway: data.takeaway,
+                delivery: data.delivery,
             })),
         };
     },

@@ -2,107 +2,173 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getRestaurantContext } from "./context";
 
+// convex/orders.ts - Update getOrders
 export const getOrders = query({
     handler: async (ctx) => {
         const { restaurantId } = await getRestaurantContext(ctx);
 
         const orders = await ctx.db
             .query("orders")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .order("desc")
             .collect();
 
         // Get all unique user IDs to fetch cashier names
-        const userIds = [...new Set(orders.map(o => o.userId))];
+        const userIds = [...new Set(orders.map((o) => o.userId))];
         const users = await Promise.all(
             userIds.map(async (id) => {
                 const user = await ctx.db.get(id);
                 return { id, name: user?.name ?? "Unknown Cashier" };
-            })
+            }),
         );
-        const userMap = new Map(users.map(u => [u.id, u.name]));
+        const userMap = new Map(users.map((u) => [u.id, u.name]));
 
-        return await Promise.all(orders.map(async (order) => {
-            const table = await ctx.db.get(order.tableId);
-            
-            // Get payment method from payments table
-            const payment = await ctx.db
-                .query("payments")
-                .withIndex("by_order", q => q.eq("orderId", order._id))
-                .first();
-            
-            const items = await ctx.db
-                .query("orderItems")
-                .withIndex("by_order", q => q.eq("orderId", order._id))
-                .collect();
+        return await Promise.all(
+            orders.map(async (order) => {
+                // Only get table if it's dine_in
+                const table =
+                    order.orderType === "dine_in" && order.tableId
+                        ? await ctx.db.get(order.tableId)
+                        : null;
 
-            const itemsWithDetails = await Promise.all(items.map(async (item) => {
-                const menuItem = await ctx.db.get(item.itemId);
+                // Get payment method from payments table
+                const payment = await ctx.db
+                    .query("payments")
+                    .withIndex("by_order", (q) => q.eq("orderId", order._id))
+                    .first();
+
+                const items = await ctx.db
+                    .query("orderItems")
+                    .withIndex("by_order", (q) => q.eq("orderId", order._id))
+                    .collect();
+
+                const itemsWithDetails = await Promise.all(
+                    items.map(async (item) => {
+                        const menuItem = await ctx.db.get(item.itemId);
+                        return {
+                            ...item,
+                            menuItemName: menuItem?.name ?? "Unknown",
+                            menuItemPrice: menuItem?.price ?? 0,
+                            menuItemImage: menuItem?.image ?? "",
+                        };
+                    }),
+                );
+
                 return {
-                    ...item,
-                    menuItemName: menuItem?.name ?? "Unknown",
-                    menuItemPrice: menuItem?.price ?? 0,
-                    menuItemImage: menuItem?.image ?? "",
+                    ...order,
+                    tableName:
+                        table?.name ??
+                        (order.orderType === "takeaway"
+                            ? "Takeaway"
+                            : order.orderType === "delivery"
+                                ? "Delivery"
+                                : "Unknown"),
+                    cashierName: userMap.get(order.userId) ?? "Unknown Cashier",
+                    paymentMethod: payment?.method ?? "N/A",
+                    items: itemsWithDetails,
                 };
-            }));
-
-            return {
-                ...order,
-                tableName: table?.name ?? "Unknown",
-                cashierName: userMap.get(order.userId) ?? "Unknown Cashier",
-                paymentMethod: payment?.method ?? "N/A",
-                items: itemsWithDetails,
-            };
-        }));
+            }),
+        );
     },
 });
 
 // cashiers see their own orders automatically
 export const getMyOrders = query({
-    handler: async (ctx) => {
+    args: {
+        orderType: v.optional(v.union(
+            v.literal("dine_in"),
+            v.literal("takeaway"),
+            v.literal("delivery"),
+        )),
+    },
+    handler: async (ctx, args) => {
         const { restaurantId, user } = await getRestaurantContext(ctx);
 
-        const orders = await ctx.db
+        // Build query
+        let query = ctx.db
             .query("orders")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
-            .order("desc")
-            .collect();
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
+            .filter((q) => q.eq(q.field("userId"), user._id));
+        
+        // Add order type filter if provided
+        if (args.orderType) {
+            query = query.filter((q) => q.eq(q.field("orderType"), args.orderType));
+        }
+        
+        const myOrders = await query.order("desc").collect();
 
-        const myOrders = orders.filter(o => o.userId === user._id);
+        return await Promise.all(
+            myOrders.map(async (order) => {
+                // Handle table based on order type
+                let displayName = "Unknown";
+                
+                if (order.orderType === "dine_in" && order.tableId) {
+                    const table = await ctx.db.get(order.tableId);
+                    displayName = table?.name ?? "Unknown Table";
+                } else if (order.orderType === "takeaway") {
+                    displayName = "Takeaway";
+                } else if (order.orderType === "delivery") {
+                    displayName = "Delivery";
+                }
+                
+                const items = await ctx.db
+                    .query("orderItems")
+                    .withIndex("by_order", (q) => q.eq("orderId", order._id))
+                    .collect();
 
-        return await Promise.all(myOrders.map(async (order) => {
-            const table = await ctx.db.get(order.tableId);
-            const items = await ctx.db
-                .query("orderItems")
-                .withIndex("by_order", q => q.eq("orderId", order._id))
-                .collect();
+                const itemsWithDetails = await Promise.all(
+                    items.map(async (item) => {
+                        const menuItem = await ctx.db.get(item.itemId);
+                        return {
+                            ...item,
+                            menuItemName: menuItem?.name ?? "Unknown",
+                            menuItemPrice: menuItem?.price ?? 0,
+                            menuItemImage: menuItem?.image ?? "",
+                        };
+                    }),
+                );
 
-            const itemsWithDetails = await Promise.all(items.map(async (item) => {
-                const menuItem = await ctx.db.get(item.itemId);
+                // Get payment method
+                const payment = await ctx.db
+                    .query("payments")
+                    .withIndex("by_order", (q) => q.eq("orderId", order._id))
+                    .first();
+
                 return {
-                    ...item,
-                    menuItemName: menuItem?.name ?? "Unknown",
-                    menuItemPrice: menuItem?.price ?? 0,
+                    ...order,
+                    tableName: displayName,
+                    orderTypeLabel: order.orderType === "dine_in" ? "Dine In" : 
+                                   order.orderType === "takeaway" ? "Takeaway" : "Delivery",
+                    paymentMethod: payment?.method ?? "N/A",
+                    items: itemsWithDetails,
                 };
-            }));
-
-            return {
-                ...order,
-                tableName: table?.name ?? "Unknown",
-                items: itemsWithDetails,
-            };
-        }));
+            }),
+        );
     },
 });
 
 export const createOrder = mutation({
     args: {
-        tableId: v.id("tables"),
+        tableId: v.optional(v.id("tables")),
         userId: v.id("users"),
-        items: v.array(v.object({
-            itemId: v.id("menuItems"),
-            quantity: v.number(),
-            note: v.optional(v.string()),
+        orderType: v.union(
+            v.literal("dine_in"),
+            v.literal("takeaway"),
+            v.literal("delivery"),
+        ),
+        items: v.array(
+            v.object({
+                itemId: v.id("menuItems"),
+                quantity: v.number(),
+                note: v.optional(v.string()),
+            }),
+        ),
+        deliveryDetails: v.optional(v.object({
+            clientName: v.string(),
+            phoneNumber: v.string(),
+            address: v.string(),
+            floorNumber: v.optional(v.string()),
+            apartment: v.optional(v.string()),
         })),
     },
     handler: async (ctx, args) => {
@@ -119,9 +185,11 @@ export const createOrder = mutation({
             restaurantId,
             tableId: args.tableId,
             userId: args.userId,
+            orderType: args.orderType,
             status: "pending",
             total,
             createdAt: Date.now(),
+            deliveryDetails: args.deliveryDetails,
         });
 
         for (const item of args.items) {
@@ -134,12 +202,16 @@ export const createOrder = mutation({
             });
         }
 
-        await ctx.db.patch(args.tableId, { status: "occupied" });
+        // Only update table if dine_in
+        if (args.orderType === "dine_in" && args.tableId) {
+            await ctx.db.patch(args.tableId, { status: "occupied" });
+        }
 
         return orderId;
     },
 });
 
+// convex/orders.ts - Update updateOrderStatus
 export const updateOrderStatus = mutation({
     args: {
         orderId: v.id("orders"),
@@ -152,10 +224,18 @@ export const updateOrderStatus = mutation({
         ),
     },
     handler: async (ctx, args) => {
+        const order = await ctx.db.get(args.orderId);
+        if (!order) throw new Error("Order not found");
+
         await ctx.db.patch(args.orderId, { status: args.status });
-        if (args.status === "paid") {
-            const order = await ctx.db.get(args.orderId);
-            if (order) await ctx.db.patch(order.tableId, { status: "available" });
+
+        // Only update table status for dine-in orders when paid
+        if (
+            args.status === "paid" &&
+            order.orderType === "dine_in" &&
+            order.tableId
+        ) {
+            await ctx.db.patch(order.tableId, { status: "available" });
         }
     },
 });
@@ -163,21 +243,23 @@ export const updateOrderStatus = mutation({
 export const updateOrder = mutation({
     args: {
         orderId: v.id("orders"),
-        items: v.array(v.object({
-            itemId: v.id("menuItems"),
-            quantity: v.number(),
-            note: v.optional(v.string()),
-        })),
+        items: v.array(
+            v.object({
+                itemId: v.id("menuItems"),
+                quantity: v.number(),
+                note: v.optional(v.string()),
+            }),
+        ),
     },
     handler: async (ctx, args) => {
         const { restaurantId } = await getRestaurantContext(ctx);
 
         const existingItems = await ctx.db
             .query("orderItems")
-            .withIndex("by_order", q => q.eq("orderId", args.orderId))
+            .withIndex("by_order", (q) => q.eq("orderId", args.orderId))
             .collect();
 
-        await Promise.all(existingItems.map(item => ctx.db.delete(item._id)));
+        await Promise.all(existingItems.map((item) => ctx.db.delete(item._id)));
 
         let total = 0;
         for (const item of args.items) {
@@ -186,26 +268,27 @@ export const updateOrder = mutation({
             total += menuItem.price * item.quantity;
         }
 
-        await Promise.all(args.items.map(item =>
-            ctx.db.insert("orderItems", {
-                restaurantId,
-                orderId: args.orderId,
-                itemId: item.itemId,
-                quantity: item.quantity,
-                note: item.note,
-            })
-        ));
+        await Promise.all(
+            args.items.map((item) =>
+                ctx.db.insert("orderItems", {
+                    restaurantId,
+                    orderId: args.orderId,
+                    itemId: item.itemId,
+                    quantity: item.quantity,
+                    note: item.note,
+                }),
+            ),
+        );
 
         await ctx.db.patch(args.orderId, { total });
         return args.orderId;
     },
 });
 
-// convex/orders.ts - Replace your getDashboardStats with this
 export const getDashboardStats = query({
     handler: async (ctx) => {
         const { restaurantId } = await getRestaurantContext(ctx);
-        
+
         const now = Date.now();
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
@@ -215,22 +298,33 @@ export const getDashboardStats = query({
         // Get orders for this restaurant only
         const allOrders = await ctx.db
             .query("orders")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .collect();
 
+        // Order type breakdown for today
+        const orderTypeBreakdown = {
+            dine_in: 0,
+            takeaway: 0,
+            delivery: 0,
+        };
+
+        const todayOrders = allOrders.filter((o) => o.createdAt >= todayStart);
+        todayOrders.forEach((order) => {
+            orderTypeBreakdown[order.orderType]++;
+        });
+
         // Today's orders
-        const todayOrders = allOrders.filter(o => o.createdAt >= todayStart);
         const yesterdayOrders = allOrders.filter(
-            o => o.createdAt >= yesterdayStart && o.createdAt < todayStart
+            (o) => o.createdAt >= yesterdayStart && o.createdAt < todayStart,
         );
 
         // Today's revenue (paid orders only)
         const todayRevenue = todayOrders
-            .filter(o => o.status === "paid")
+            .filter((o) => o.status === "paid")
             .reduce((sum, o) => sum + o.total, 0);
 
         const yesterdayRevenue = yesterdayOrders
-            .filter(o => o.status === "paid")
+            .filter((o) => o.status === "paid")
             .reduce((sum, o) => sum + o.total, 0);
 
         // Total orders today
@@ -238,12 +332,10 @@ export const getDashboardStats = query({
         const yesterdayOrderCount = yesterdayOrders.length;
 
         // Avg order value today
-        const avgOrderValue = todayOrderCount > 0
-            ? todayRevenue / todayOrderCount
-            : 0;
-        const yesterdayAvg = yesterdayOrderCount > 0
-            ? yesterdayRevenue / yesterdayOrderCount
-            : 0;
+        const avgOrderValue =
+            todayOrderCount > 0 ? todayRevenue / todayOrderCount : 0;
+        const yesterdayAvg =
+            yesterdayOrderCount > 0 ? yesterdayRevenue / yesterdayOrderCount : 0;
 
         // Recent orders with details
         const recentOrders = await Promise.all(
@@ -251,26 +343,34 @@ export const getDashboardStats = query({
                 .sort((a, b) => b.createdAt - a.createdAt)
                 .slice(0, 5)
                 .map(async (order) => {
-                    const table = await ctx.db.get(order.tableId);
+                    const table =
+                        order.orderType === "dine_in" && order.tableId
+                            ? await ctx.db.get(order.tableId)
+                            : null;
                     const items = await ctx.db
                         .query("orderItems")
-                        .withIndex("by_order", q => q.eq("orderId", order._id))
+                        .withIndex("by_order", (q) => q.eq("orderId", order._id))
                         .collect();
                     return {
                         ...order,
-                        tableName: table?.name ?? "Unknown",
+                        tableName:
+                            table?.name ??
+                            (order.orderType === "takeaway" ? "Takeaway" : "Delivery"),
                         itemCount: items.length,
                     };
-                })
+                }),
         );
 
-        // Top items by revenue (filter by restaurant)
+        // Top items by revenue
         const allOrderItems = await ctx.db
             .query("orderItems")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .collect();
-            
-        const itemStats: Record<string, { name: string; orders: number; revenue: number }> = {};
+
+        const itemStats: Record<
+            string,
+            { name: string; orders: number; revenue: number }
+        > = {};
 
         await Promise.all(
             allOrderItems.map(async (oi) => {
@@ -281,7 +381,7 @@ export const getDashboardStats = query({
                 }
                 itemStats[oi.itemId].orders += oi.quantity;
                 itemStats[oi.itemId].revenue += menuItem.price * oi.quantity;
-            })
+            }),
         );
 
         const topItems = Object.values(itemStats)
@@ -291,7 +391,7 @@ export const getDashboardStats = query({
         // % change helper
         const pctChange = (today: number, yesterday: number) => {
             if (yesterday === 0) return today > 0 ? 100 : 0;
-            return +((((today - yesterday) / yesterday) * 100).toFixed(1));
+            return +(((today - yesterday) / yesterday) * 100).toFixed(1);
         };
 
         return {
@@ -306,29 +406,29 @@ export const getDashboardStats = query({
             avgChange: pctChange(avgOrderValue, yesterdayAvg),
             recentOrders,
             topItems,
+            orderTypeBreakdown, // Add this
         };
     },
 });
 
-
 export const getReportsData = query({
     handler: async (ctx) => {
         const { restaurantId } = await getRestaurantContext(ctx);
-        
+
         // Filter by restaurant for all queries
         const orders = await ctx.db
             .query("orders")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .collect();
-            
+
         const orderItems = await ctx.db
             .query("orderItems")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .collect();
-            
+
         const payments = await ctx.db
             .query("payments")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .collect();
 
         // ── Daily revenue (last 7 days) ──
@@ -341,8 +441,8 @@ export const getReportsData = query({
         }
 
         orders
-            .filter(o => o.status === "paid")
-            .forEach(o => {
+            .filter((o) => o.status === "paid")
+            .forEach((o) => {
                 const key = new Date(o.createdAt).toISOString().split("T")[0];
                 if (key in dailyRevenue) dailyRevenue[key] += o.total;
             });
@@ -354,9 +454,11 @@ export const getReportsData = query({
         }
 
         orders
-            .filter(o => o.status === "paid")
-            .forEach(o => {
-                const weeksAgo = Math.floor((Date.now() - o.createdAt) / (7 * 24 * 60 * 60 * 1000));
+            .filter((o) => o.status === "paid")
+            .forEach((o) => {
+                const weeksAgo = Math.floor(
+                    (Date.now() - o.createdAt) / (7 * 24 * 60 * 60 * 1000),
+                );
                 if (weeksAgo < 4) {
                     const key = `Week ${4 - weeksAgo}`;
                     weeklyRevenue[key] = (weeklyRevenue[key] ?? 0) + o.total;
@@ -365,7 +467,20 @@ export const getReportsData = query({
 
         // ── Monthly revenue (last 6 months) ──
         const monthlyRevenue: Record<string, number> = {};
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthNames = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ];
         for (let i = 5; i >= 0; i--) {
             const d = new Date();
             d.setMonth(d.getMonth() - i);
@@ -374,10 +489,11 @@ export const getReportsData = query({
         }
 
         orders
-            .filter(o => o.status === "paid")
-            .forEach(o => {
+            .filter((o) => o.status === "paid")
+            .forEach((o) => {
                 const d = new Date(o.createdAt);
-                const monthsAgo = (new Date().getFullYear() - d.getFullYear()) * 12 +
+                const monthsAgo =
+                    (new Date().getFullYear() - d.getFullYear()) * 12 +
                     (new Date().getMonth() - d.getMonth());
                 if (monthsAgo < 6) {
                     const key = monthNames[d.getMonth()];
@@ -386,8 +502,11 @@ export const getReportsData = query({
             });
 
         // ── Top selling items ──
-        const itemStats: Record<string, { name: string; quantity: number; revenue: number }> = {};
-        
+        const itemStats: Record<
+            string,
+            { name: string; quantity: number; revenue: number }
+        > = {};
+
         // Create a map of menu items to avoid repeated db calls
         const menuItemCache = new Map();
         for (const oi of orderItems) {
@@ -396,7 +515,7 @@ export const getReportsData = query({
                 if (menuItem) menuItemCache.set(oi.itemId, menuItem);
             }
         }
-        
+
         orderItems.forEach((oi) => {
             const menuItem = menuItemCache.get(oi.itemId);
             if (!menuItem) return;
@@ -414,50 +533,61 @@ export const getReportsData = query({
         // ── Busiest hours ──
         const hourlyOrders: Record<number, number> = {};
         for (let h = 0; h < 24; h++) hourlyOrders[h] = 0;
-        orders.forEach(o => {
+        orders.forEach((o) => {
             const hour = new Date(o.createdAt).getHours();
             hourlyOrders[hour]++;
         });
 
         // ── Payment method breakdown ──
         const paymentMethods: Record<string, number> = {};
-        payments.forEach(p => {
+        payments.forEach((p) => {
             const method = p.method;
             paymentMethods[method] = (paymentMethods[method] || 0) + p.amount;
         });
 
         // ── Summary stats ──
         const totalRevenue = orders
-            .filter(o => o.status === "paid")
+            .filter((o) => o.status === "paid")
             .reduce((sum, o) => sum + o.total, 0);
 
         const totalOrders = orders.length;
-        const paidOrders = orders.filter(o => o.status === "paid").length;
+        const paidOrders = orders.filter((o) => o.status === "paid").length;
         const avgOrderValue = paidOrders > 0 ? totalRevenue / paidOrders : 0;
 
         // ── Status breakdown ──
         const statusBreakdown: Record<string, number> = {};
-        orders.forEach(o => {
+        orders.forEach((o) => {
             statusBreakdown[o.status] = (statusBreakdown[o.status] || 0) + 1;
         });
 
         return {
             dailyRevenue: Object.entries(dailyRevenue).map(([date, revenue]) => ({
-                label: new Date(date).toLocaleDateString("en", { weekday: "short", month: "short", day: "numeric" }),
+                label: new Date(date).toLocaleDateString("en", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                }),
                 revenue,
             })),
-            weeklyRevenue: Object.entries(weeklyRevenue).map(([label, revenue]) => ({ label, revenue })),
-            monthlyRevenue: Object.entries(monthlyRevenue).map(([label, revenue]) => ({ label, revenue })),
+            weeklyRevenue: Object.entries(weeklyRevenue).map(([label, revenue]) => ({
+                label,
+                revenue,
+            })),
+            monthlyRevenue: Object.entries(monthlyRevenue).map(
+                ([label, revenue]) => ({ label, revenue }),
+            ),
             topItems,
             hourlyOrders: Object.entries(hourlyOrders).map(([hour, count]) => ({
                 hour: parseInt(hour),
                 label: `${parseInt(hour).toString().padStart(2, "0")}:00`,
                 count,
             })),
-            paymentMethodBreakdown: Object.entries(paymentMethods).map(([method, amount]) => ({
-                method,
-                amount,
-            })),
+            paymentMethodBreakdown: Object.entries(paymentMethods).map(
+                ([method, amount]) => ({
+                    method,
+                    amount,
+                }),
+            ),
             statusBreakdown,
             totalRevenue,
             totalOrders,
@@ -467,7 +597,6 @@ export const getReportsData = query({
     },
 });
 
-
 //Takes a userId parameter - can be used by admins to view any cashier's orders
 export const getCashierOrders = query({
     args: {
@@ -475,27 +604,38 @@ export const getCashierOrders = query({
     },
     handler: async (ctx, args) => {
         const { restaurantId } = await getRestaurantContext(ctx);
-        
+
         // Verify the user belongs to this restaurant
         const user = await ctx.db.get(args.userId);
         if (!user || user.restaurantId !== restaurantId) {
             throw new Error("Unauthorized: User not found in this restaurant");
         }
-        
+
         const orders = await ctx.db
             .query("orders")
-            .withIndex("by_restaurant", q => q.eq("restaurantId", restaurantId))
+            .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .filter((q) => q.eq(q.field("userId"), args.userId))
             .order("desc")
             .collect();
 
         const ordersWithDetails = await Promise.all(
             orders.map(async (order) => {
-                const table = await ctx.db.get(order.tableId);
+                // Handle table based on order type
+                let table = null;
+                let displayName = "Unknown";
+
+                if (order.orderType === "dine_in" && order.tableId) {
+                    table = await ctx.db.get(order.tableId);
+                    displayName = table?.name ?? "Unknown Table";
+                } else if (order.orderType === "takeaway") {
+                    displayName = "Takeaway";
+                } else if (order.orderType === "delivery") {
+                    displayName = "Delivery";
+                }
 
                 const items = await ctx.db
                     .query("orderItems")
-                    .withIndex("by_order", q => q.eq("orderId", order._id))
+                    .withIndex("by_order", (q) => q.eq("orderId", order._id))
                     .collect();
 
                 const itemsWithDetails = await Promise.all(
@@ -507,18 +647,30 @@ export const getCashierOrders = query({
                             menuItemPrice: menuItem?.price ?? 0,
                             menuItemImage: menuItem?.image ?? "",
                         };
-                    })
+                    }),
                 );
+
+                // Get payment method if available
+                const payment = await ctx.db
+                    .query("payments")
+                    .withIndex("by_order", (q) => q.eq("orderId", order._id))
+                    .first();
 
                 return {
                     ...order,
-                    tableName: table?.name ?? "Unknown",
+                    tableName: displayName,
+                    orderTypeLabel:
+                        order.orderType === "dine_in"
+                            ? "Dine In"
+                            : order.orderType === "takeaway"
+                                ? "Takeaway"
+                                : "Delivery",
+                    paymentMethod: payment?.method ?? "N/A",
                     items: itemsWithDetails,
                 };
-            })
+            }),
         );
 
         return ordersWithDetails;
     },
 });
-

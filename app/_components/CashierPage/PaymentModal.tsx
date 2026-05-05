@@ -26,7 +26,15 @@ type Props = {
     orderNumber?: string;
     tableName?: string;
     cashierName?: string;
+    orderType?: "dine_in" | "takeaway" | "delivery";
     items?: ReceiptItem[];
+    deliveryDetails?: {
+        clientName: string;
+        phoneNumber: string;
+        address: string;
+        floorNumber?: string;
+        apartment?: string;
+    };
     onSuccess?: () => void;
 };
 
@@ -38,7 +46,9 @@ export default function PaymentModal({
     orderNumber = "0001",
     tableName = "Table 01",
     cashierName = "Cashier",
+    orderType = "dine_in",
     items = [],
+    deliveryDetails,
     onSuccess,
 }: Props) {
     const [method, setMethod] = useState<"cash" | "card">("card");
@@ -188,12 +198,14 @@ export default function PaymentModal({
                                     orderNumber={orderNumber}
                                     tableName={tableName}
                                     cashierName={cashierName}
+                                    orderType={orderType}
                                     items={items}
                                     subtotal={subtotal}
                                     tax={tax}
                                     total={total}
                                     paymentMethod={paidMethod}
                                     time={time}
+                                    deliveryDetails={deliveryDetails}
                                 />
                             </div>
                         </div>

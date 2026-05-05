@@ -64,8 +64,13 @@ export default defineSchema({
     // ── Orders ─────────────────────────────────────────
     orders: defineTable({
         restaurantId: v.id("restaurants"),
-        tableId: v.id("tables"),
+        tableId: v.optional(v.id("tables")),
         userId: v.id("users"),
+        orderType: v.union(
+            v.literal("dine_in"),
+            v.literal("takeaway"),
+            v.literal("delivery"),
+        ),
         status: v.union(
             v.literal("pending"),
             v.literal("confirmed"),
@@ -76,6 +81,13 @@ export default defineSchema({
         total: v.number(),
         createdAt: v.number(),
         paymentMethod: v.optional(v.union(v.literal("cash"), v.literal("card"))),
+        deliveryDetails: v.optional(v.object({
+            clientName: v.string(),
+            phoneNumber: v.string(),
+            address: v.string(),
+            floorNumber: v.optional(v.string()),
+            apartment: v.optional(v.string()),
+        })),
     })
         .index("by_restaurant", ["restaurantId"])
         .index("by_table", ["tableId"]),
