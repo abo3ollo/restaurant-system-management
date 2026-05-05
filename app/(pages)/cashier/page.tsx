@@ -13,7 +13,7 @@ import CashierDashboard from "@/app/_components/CashierPage/DashboardCashier";
 export default function CashierPage() {
     const [activeTab, setActiveTab] = useState<"new-order" | "my-orders" | "dashboard">("new-order");
     const currentUser = useQuery(api.users.getCurrentUser);
-    const myOrders = useQuery(api.orders.getMyOrders);
+    const myOrders = useQuery(api.orders.getMyOrders, {});
     const activeOrders = myOrders?.filter(o => o.status !== "paid") ?? [];
 
     const restaurant = useQuery(api.restaurants.getMyRestaurant);
