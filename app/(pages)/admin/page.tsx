@@ -22,6 +22,7 @@ import Orders from "@/app/_components/AdminPage/Orders";
 import Reports from "@/app/_components/AdminPage/Reports";
 import TablesManagement from "@/app/_components/AdminPage/TablesManagement";
 import CategoriesManagement from "@/app/_components/AdminPage/CategoriesManagement";
+import SettingsPage from "@/app/_components/AdminPage/Settings";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
@@ -33,6 +34,7 @@ const NAV = [
     { label: "Menu", icon: BookOpen },
     { label: "Reports", icon: BarChart2 },
     { label: "Users", icon: Users },
+    { label: "Settings", icon: Settings },
 ];
 
 
@@ -171,6 +173,7 @@ export default function AdminDashboard() {
                     {activeNav === "Users" && <UserManagement />}
                     {activeNav === "Orders" && <Orders />}
                     {activeNav === "Reports" && <Reports />}
+                    {activeNav === "Settings" && <SettingsPage />}
                 </div>
             </div>
         </div>

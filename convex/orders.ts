@@ -431,6 +431,24 @@ export const getReportsData = query({
             .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .collect();
 
+        // Get restaurant tax settings
+        const restaurant = await ctx.db.get(restaurantId);
+        const taxRate = restaurant?.taxRate ?? 0;
+        const taxEnabled = restaurant?.taxEnabled ?? false;
+
+        // ── Calculate tax collected ──
+        let totalTaxCollected = 0;
+        if (taxEnabled && taxRate > 0) {
+            orders
+                .filter((o) => o.status === "paid")
+                .forEach((o) => {
+                    // tax = total - (total / (1 + taxRate/100))
+                    const base = o.total / (1 + taxRate / 100);
+                    const tax = o.total - base;
+                    totalTaxCollected += +tax.toFixed(2);
+                });
+        }
+
         // ── Daily revenue (last 7 days) ──
         const dailyRevenue: Record<string, number> = {};
         for (let i = 6; i >= 0; i--) {
@@ -446,8 +464,6 @@ export const getReportsData = query({
                 const key = new Date(o.createdAt).toISOString().split("T")[0];
                 if (key in dailyRevenue) dailyRevenue[key] += o.total;
             });
-
-        // ── Weekly revenue (last 4 weeks) ──
         const weeklyRevenue: Record<string, number> = {};
         for (let i = 3; i >= 0; i--) {
             weeklyRevenue[`Week ${4 - i}`] = 0;
@@ -593,6 +609,9 @@ export const getReportsData = query({
             totalOrders,
             paidOrders,
             avgOrderValue,
+            totalTaxCollected,
+            taxRate,
+            taxEnabled,
         };
     },
 });

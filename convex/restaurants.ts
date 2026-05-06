@@ -278,3 +278,21 @@ export const getMyRestaurant = query({
         return await ctx.db.get(user.restaurantId);
     },
 });
+
+export const updateSettings = mutation({
+    args: {
+        id: v.id("restaurants"),
+        taxRate: v.optional(v.number()),
+        taxEnabled: v.optional(v.boolean()),
+        currency: v.optional(v.string()),
+        address: v.optional(v.string()),
+        phone: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const { id, ...updates } = args;
+        const filteredUpdates = Object.fromEntries(
+            Object.entries(updates).filter(([_, v]) => v !== undefined)
+        );
+        return await ctx.db.patch(id, filteredUpdates);
+    },
+});

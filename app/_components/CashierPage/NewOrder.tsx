@@ -56,6 +56,9 @@ function NewOrder() {
     const data = useQuery(api.menuItems.getMenu);
     const tables = useQuery(api.tables.getTables);
     const allOrders = useQuery(api.orders.getOrders);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    console.log(restaurant);
+    
     const updateOrder = useMutation(api.orders.updateOrder);
     const { handleConfirm } = useCreateOrder();
 
@@ -121,12 +124,16 @@ function NewOrder() {
     };
 
     const handleOpenPayment = (order: any) => {
+        const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+        const tax = +(order.total * (taxRate / 100)).toFixed(2);
+        const discount = 5;
+        const calculatedTotal = +(order.total + tax - discount).toFixed(2);
+        
         setPayingOrderId(order._id as Id<"orders">);
-        setPayingTotal(order.total);
-        setPayingOrder(order); // ← add this state
+        setPayingTotal(calculatedTotal);
+        setPayingOrder(order);
         setPaymentOpen(true);
-        clearCart(activeTable ?? ""); // Clear cart when opening payment modal
-
+        clearCart(activeTable ?? "");
     };
 
     const categoryMap = new Map((data?.categories || []).map((c: any) => [c._id, c.name]));
@@ -146,7 +153,8 @@ function NewOrder() {
 
     const cart = getCart(activeTable ?? "");
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const tax = +(subtotal * 0.08).toFixed(2);
+    const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+    const tax = +(subtotal * (taxRate / 100)).toFixed(2);
     const discount = 5;
     const total = +(subtotal + tax - discount).toFixed(2);
 
@@ -506,7 +514,12 @@ function NewOrder() {
                                     {/* Order footer */}
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-black text-indigo-600">
-                                            ${order.total.toFixed(2)}
+                                            ${(() => {
+                                                const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+                                                const tax = +(order.total * (taxRate / 100)).toFixed(2);
+                                                const discount = 5;
+                                                return (order.total + tax - discount).toFixed(2);
+                                            })()}
                                         </p>
 
                                         {/* Pay button for served orders */}
@@ -533,7 +546,7 @@ function NewOrder() {
                         <span>${subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-neutral-500">
-                        <span>Tax (8%)</span>
+                        <span>Tax ({restaurant?.taxRate}%)</span>
                         <span>${tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-rose-500 font-medium">
@@ -598,7 +611,12 @@ function NewOrder() {
                             >
                                 <CreditCard size={15} className="mr-2" />
                                 {payableOrder
-                                    ? `Pay Now — $${payableOrder.total.toFixed(2)}`
+                                    ? `Pay Now — $${(() => {
+                                        const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+                                        const tax = +(payableOrder.total * (taxRate / 100)).toFixed(2);
+                                        const discount = 5;
+                                        return (payableOrder.total + tax - discount).toFixed(2);
+                                    })()}`
                                     : "Pay Now"
                                 }
                             </Button>
@@ -630,6 +648,8 @@ function NewOrder() {
                     price: i.menuItemPrice,
                 })) ?? []}
                 deliveryDetails={payingOrder?.deliveryDetails}
+                taxRate={restaurant?.taxRate ?? 0}
+                taxEnabled={restaurant?.taxEnabled ?? false}
                 onSuccess={() => {
                     // setPayingOrderId(null);
                     // setPayingTotal(0);

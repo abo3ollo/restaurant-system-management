@@ -98,6 +98,12 @@ function AnalyticsReport() {
             icon: DollarSign,
             color: "bg-rose-100 text-rose-600",
         },
+        ...(data.taxEnabled && data.taxRate > 0 ? [{
+            label: `Tax Collected (${data.taxRate}%)`,
+            value: `$${data.totalTaxCollected.toFixed(2)}`,
+            icon: DollarSign,
+            color: "bg-purple-100 text-purple-600",
+        }] : []),
     ];
 
 

@@ -35,6 +35,8 @@ type Props = {
         floorNumber?: string;
         apartment?: string;
     };
+    taxRate?: number;
+    taxEnabled?: boolean;
     onSuccess?: () => void;
 };
 
@@ -49,6 +51,8 @@ export default function PaymentModal({
     orderType = "dine_in",
     items = [],
     deliveryDetails,
+    taxRate = 0,
+    taxEnabled = false,
     onSuccess,
 }: Props) {
     const [method, setMethod] = useState<"cash" | "card">("card");
@@ -60,7 +64,7 @@ export default function PaymentModal({
     const processPayment = useMutation(api.payments.processPayment);
 
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const tax = +(subtotal * 0.08).toFixed(2);
+    const tax = taxEnabled ? +(subtotal * (taxRate / 100)).toFixed(2) : 0;
     const time = new Date().toLocaleTimeString("en", {
         hour: "2-digit",
         minute: "2-digit",
@@ -205,6 +209,7 @@ export default function PaymentModal({
                                     total={total}
                                     paymentMethod={paidMethod}
                                     time={time}
+                                    taxRate={taxRate}
                                     deliveryDetails={deliveryDetails}
                                 />
                             </div>

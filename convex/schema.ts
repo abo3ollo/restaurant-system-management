@@ -12,6 +12,9 @@ export default defineSchema({
         plan: v.union(v.literal("free"), v.literal("pro"), v.literal("enterprise")),
         status: v.union(v.literal("active"), v.literal("suspended")),
         createdAt: v.number(),
+        taxRate: v.optional(v.number()),
+        taxEnabled: v.optional(v.boolean()),
+        currency: v.optional(v.string()),
     }).index("by_slug", ["slug"]),
 
     // ── Users ──────────────────────────────────────────

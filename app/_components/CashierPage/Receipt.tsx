@@ -19,6 +19,7 @@ type ReceiptProps = {
     total: number;
     paymentMethod: "cash" | "card";
     time: string;
+    taxRate?: number;
     deliveryDetails?: {
         clientName: string;
         phoneNumber: string;
@@ -39,6 +40,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
     total,
     paymentMethod,
     time,
+    taxRate = 0,
     deliveryDetails,
 }, ref) => {
     // Get order type label
@@ -125,7 +127,9 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
 
             {/* Totals */}
             <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-            <Row label="Tax (8%)" value={`$${tax.toFixed(2)}`} />
+            {tax > 0 && (
+                <Row label={`Tax (${taxRate}%)`} value={`$${tax.toFixed(2)}`} />
+            )}
             <div style={{
                 display: "flex",
                 justifyContent: "space-between",
