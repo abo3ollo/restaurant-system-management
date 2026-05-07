@@ -16,6 +16,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer,
 } from "recharts";
+import { getCurrencySymbol } from "@/lib/currency";
 
 const STATUS_STYLE: Record<string, string> = {
     pending:   "bg-yellow-100 text-yellow-700",
@@ -197,7 +198,7 @@ export default function RestaurantDetailsPage() {
                             <DollarSign size={14} className="text-emerald-600" />
                             <p className="text-xs font-bold text-neutral-400 uppercase tracking-widests">Total Revenue</p>
                         </div>
-                        <p className="text-2xl font-black text-emerald-600">${restaurant.totalRevenue.toFixed(2)}</p>
+                        <p className="text-2xl font-black text-emerald-600">{getCurrencySymbol(restaurant?.currency)}{restaurant.totalRevenue.toFixed(2)}</p>
                         <p className="text-xs text-neutral-400 mt-1">{restaurant.paidOrders} paid orders</p>
                     </div>
                     <div className="bg-white rounded-2xl border border-neutral-100 p-5">
@@ -205,14 +206,14 @@ export default function RestaurantDetailsPage() {
                             <Banknote size={14} className="text-green-600" />
                             <p className="text-xs font-bold text-neutral-400 uppercase tracking-widests">Cash Revenue</p>
                         </div>
-                        <p className="text-2xl font-black text-green-600">${restaurant.cashRevenue.toFixed(2)}</p>
+                        <p className="text-2xl font-black text-green-600">{getCurrencySymbol(restaurant?.currency)}{restaurant.cashRevenue.toFixed(2)}</p>
                     </div>
                     <div className="bg-white rounded-2xl border border-neutral-100 p-5">
                         <div className="flex items-center gap-2 mb-2">
                             <CreditCard size={14} className="text-blue-600" />
                             <p className="text-xs font-bold text-neutral-400 uppercase tracking-widests">Card Revenue</p>
                         </div>
-                        <p className="text-2xl font-black text-blue-600">${restaurant.cardRevenue.toFixed(2)}</p>
+                        <p className="text-2xl font-black text-blue-600">{getCurrencySymbol(restaurant?.currency)}{restaurant.cardRevenue.toFixed(2)}</p>
                     </div>
                 </div>
 
@@ -387,7 +388,12 @@ export default function RestaurantDetailsPage() {
                                             </td>
                                             <td className="px-5 py-3">
                                                 <span className="text-sm font-black text-indigo-600">
-                                                    ${order.total.toFixed(2)}
+                                                    {getCurrencySymbol(restaurant?.currency)}{(() => {
+                                                        const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+                                                        const tax = +(order.total * (taxRate / 100)).toFixed(2);
+                                                        const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
+                                                        return (order.total + tax - discount).toFixed(2);
+                                                    })()}
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3">

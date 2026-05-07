@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 type ReceiptItem = {
     name: string;
@@ -20,6 +21,7 @@ type ReceiptProps = {
     paymentMethod: "cash" | "card";
     time: string;
     taxRate?: number;
+    currency?: string;
     deliveryDetails?: {
         clientName: string;
         phoneNumber: string;
@@ -41,6 +43,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
     paymentMethod,
     time,
     taxRate = 0,
+    currency,
     deliveryDetails,
 }, ref) => {
     // Get order type label
@@ -52,6 +55,8 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
             default: return "DINE IN";
         }
     };
+
+    const currencySymbol = getCurrencySymbol(currency);
 
     return (
         <div
@@ -119,16 +124,16 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
             {items.map((item, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", margin: "3px 0" }}>
                     <span>{item.quantity}x {item.name}</span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    <span>{currencySymbol}{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
             ))}
 
             <Divider />
 
             {/* Totals */}
-            <Row label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
+            <Row label="Subtotal" value={`${currencySymbol}${subtotal.toFixed(2)}`} />
             {tax > 0 && (
-                <Row label={`Tax (${taxRate}%)`} value={`$${tax.toFixed(2)}`} />
+                <Row label={`Tax (${taxRate}%)`} value={`${currencySymbol}${tax.toFixed(2)}`} />
             )}
             <div style={{
                 display: "flex",
@@ -138,7 +143,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
                 margin: "6px 0",
             }}>
                 <span>TOTAL</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{currencySymbol}{total.toFixed(2)}</span>
             </div>
 
             <Divider />

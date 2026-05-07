@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ShoppingBag, DollarSign, Clock, TrendingUp, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCurrencySymbol } from "@/lib/currency";
 
 type Props = {
   currentUser: any;
@@ -13,6 +14,7 @@ type Props = {
 export default function CashierDashboard({ currentUser, onCloseShift }: Props) {
   const currentShift = useQuery(api.shifts.getCurrentShift);
   const allOrders = useQuery(api.orders.getOrders);
+  const restaurant = useQuery(api.restaurants.getMyRestaurant);
 
   // Orders during this shift only
   const shiftOrders =
@@ -25,7 +27,12 @@ export default function CashierDashboard({ currentUser, onCloseShift }: Props) {
 
   const paidOrders = shiftOrders.filter((o) => o.status === "paid");
   const activeOrders = shiftOrders.filter((o) => o.status !== "paid");
-  const shiftRevenue = paidOrders.reduce((sum, o) => sum + o.total, 0);
+  const shiftRevenue = paidOrders.reduce((sum, o) => {
+    const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+    const tax = +(o.total * (taxRate / 100)).toFixed(2);
+    const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
+    return sum + (o.total + tax - discount);
+  }, 0);
 
   const shiftDuration = currentShift
     ? Math.floor((Date.now() - currentShift.startTime) / 60000)
@@ -106,7 +113,7 @@ export default function CashierDashboard({ currentUser, onCloseShift }: Props) {
             </div>
           </div>
           <p className="text-3xl font-black text-green-600">
-            ${shiftRevenue.toFixed(2)}
+            {getCurrencySymbol(restaurant?.currency)}{shiftRevenue.toFixed(2)}
           </p>
           <p className="text-xs text-neutral-400 mt-1">Paid orders only</p>
         </div>
@@ -132,7 +139,7 @@ export default function CashierDashboard({ currentUser, onCloseShift }: Props) {
                 Opening Balance
               </p>
               <p className="text-sm font-black text-neutral-800">
-                ${(currentShift.openingBalance ?? 0).toFixed(2)}
+                {getCurrencySymbol(restaurant?.currency)}{(currentShift.openingBalance ?? 0).toFixed(2)}
               </p>
             </div>
             <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-xl">
@@ -204,7 +211,12 @@ export default function CashierDashboard({ currentUser, onCloseShift }: Props) {
                       {order.paymentMethod || "N/A"}
                     </span>
                     <span className="text-sm font-black text-amber-600 w-16 text-right">
-                      ${order.total.toFixed(2)}
+                      {getCurrencySymbol(restaurant?.currency)}{(() => {
+                        const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+                        const tax = +(order.total * (taxRate / 100)).toFixed(2);
+                        const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
+                        return (order.total + tax - discount).toFixed(2);
+                      })()}
                     </span>
                   </div>
                 </div>
@@ -223,7 +235,7 @@ export default function CashierDashboard({ currentUser, onCloseShift }: Props) {
                 {paidOrders.length} paid · {activeOrders.length} active
               </span>
               <span className="text-base font-black text-green-600">
-                ${shiftRevenue.toFixed(2)}
+                {getCurrencySymbol(restaurant?.currency)}{shiftRevenue.toFixed(2)}
               </span>
             </div>
           </div>

@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Search,
 } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 // ── Helpers ────────────────────────────────────────────
 function formatTime(ts: number) {
@@ -73,9 +74,11 @@ type FilterStatus = "all" | "open" | "closed";
 
 export default function ShiftsReport() {
   const shifts = useQuery(api.shifts.getAllShifts);
+  const restaurant = useQuery(api.restaurants.getMyRestaurant);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const currencySymbol = getCurrencySymbol(restaurant?.currency);
 
   if (!shifts)
     return (
@@ -183,7 +186,8 @@ export default function ShiftsReport() {
             </div>
           </div>
           <p className="text-2xl font-black text-emerald-600">
-            ${totalRevenue.toFixed(2)}
+            {currencySymbol}
+            {totalRevenue.toFixed(2)}
           </p>
           <p className="text-xs text-neutral-400 mt-1">paid orders only</p>
         </div>
@@ -198,7 +202,9 @@ export default function ShiftsReport() {
             </div>
           </div>
           <p className="text-2xl font-black text-red-500">
-            {totalShortage > 0 ? `-$${totalShortage.toFixed(2)}` : "$0.00"}
+            {totalShortage > 0
+              ? `-${currencySymbol}${totalShortage.toFixed(2)}`
+              : `${currencySymbol}0.00`}
           </p>
           <p className="text-xs text-neutral-400 mt-1">cash discrepancies</p>
         </div>
@@ -360,7 +366,7 @@ export default function ShiftsReport() {
                       <td className="px-4 py-4">
                         <span className="text-sm font-black text-indigo-600">
                           {shift.totalRevenue !== undefined ? (
-                            `$${shift.totalRevenue.toFixed(2)}`
+                            `${currencySymbol}${shift.totalRevenue.toFixed(2)}`
                           ) : (
                             <span className="text-neutral-300">—</span>
                           )}
@@ -436,7 +442,7 @@ export default function ShiftsReport() {
                                     Opening
                                   </span>
                                   <span className="font-bold">
-                                    ${(shift.openingBalance ?? 0).toFixed(2)}
+                                    {currencySymbol}{(shift.openingBalance ?? 0).toFixed(2)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between text-xs">
@@ -444,7 +450,7 @@ export default function ShiftsReport() {
                                     Cash Sales
                                   </span>
                                   <span className="font-bold text-green-600">
-                                    +${(shift.cashSalesTotal ?? 0).toFixed(2)}
+                                    +{currencySymbol}{(shift.cashSalesTotal ?? 0).toFixed(2)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between text-xs border-t border-neutral-100 pt-2">
@@ -452,7 +458,7 @@ export default function ShiftsReport() {
                                     Expected
                                   </span>
                                   <span className="font-black">
-                                    ${(shift.expectedBalance ?? 0).toFixed(2)}
+                                    {currencySymbol}{(shift.expectedBalance ?? 0).toFixed(2)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between text-xs">
@@ -460,7 +466,7 @@ export default function ShiftsReport() {
                                     Actual
                                   </span>
                                   <span className="font-black">
-                                    ${(shift.closingBalance ?? 0).toFixed(2)}
+                                    {currencySymbol}{(shift.closingBalance ?? 0).toFixed(2)}
                                   </span>
                                 </div>
                               </div>
@@ -485,7 +491,7 @@ export default function ShiftsReport() {
                                     Total Revenue
                                   </span>
                                   <span className="font-bold text-indigo-600">
-                                    ${(shift.totalRevenue ?? 0).toFixed(2)}
+                                    {currencySymbol}{(shift.totalRevenue ?? 0).toFixed(2)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between text-xs border-t border-neutral-100 pt-2">
@@ -556,10 +562,10 @@ export default function ShiftsReport() {
                                     )}
                                   >
                                     {diff < 0
-                                      ? `-$${Math.abs(diff).toFixed(2)}`
+                                      ? `-${currencySymbol}${Math.abs(diff).toFixed(2)}`
                                       : diff > 0
-                                        ? `+$${diff.toFixed(2)}`
-                                        : "Balanced"}
+                                        ? `+${currencySymbol}${diff.toFixed(2)}`
+                                        : ` ${currencySymbol}0.00`}
                                   </p>
                                   <p className="text-[10px] text-neutral-400 font-semibold">
                                     {diff < 0

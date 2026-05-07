@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { Clock, CheckCircle, ChefHat, Utensils, CreditCard } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 // In Orders.tsx STATUS_CONFIG — add role hints
 const STATUS_CONFIG = {
@@ -20,6 +21,7 @@ const STATUS_FLOW = ["pending", "confirmed", "preparing", "served", "paid"] as c
 
 export default function Orders() {
     const orders = useQuery(api.orders.getOrders);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
     console.log(orders);
     
     const updateStatus = useMutation(api.orders.updateOrderStatus);
@@ -136,7 +138,12 @@ export default function Orders() {
                                     {/* Total */}
                                     <td className="px-6 py-4">
                                         <span className="text-sm font-black text-indigo-600">
-                                            ${order.total.toFixed(2)}
+                                            {getCurrencySymbol(restaurant?.currency)}{(() => {
+                                                const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+                                                const tax = +(order.total * (taxRate / 100)).toFixed(2);
+                                                const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
+                                                return (order.total + tax - discount).toFixed(2);
+                                            })()}
                                         </span>
                                     </td>
 

@@ -11,6 +11,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import Receipt from "./Receipt";
+import { getCurrencySymbol } from "@/lib/currency";
 
 type ReceiptItem = {
     name: string;
@@ -37,6 +38,7 @@ type Props = {
     };
     taxRate?: number;
     taxEnabled?: boolean;
+    currency?: string;
     onSuccess?: () => void;
 };
 
@@ -53,6 +55,7 @@ export default function PaymentModal({
     deliveryDetails,
     taxRate = 0,
     taxEnabled = false,
+    currency = "USD",
     onSuccess,
 }: Props) {
     const [method, setMethod] = useState<"cash" | "card">("card");
@@ -63,6 +66,8 @@ export default function PaymentModal({
     const receiptRef = useRef<HTMLDivElement>(null);
     const processPayment = useMutation(api.payments.processPayment);
 
+    const currencySymbol = getCurrencySymbol(currency);
+    
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const tax = taxEnabled ? +(subtotal * (taxRate / 100)).toFixed(2) : 0;
     const time = new Date().toLocaleTimeString("en", {
@@ -82,7 +87,7 @@ export default function PaymentModal({
             await processPayment({ orderId, method });
             setPaidMethod(method);
             setPaid(true);
-            toast.success(`Payment of $${total.toFixed(2)} processed!`);
+            toast.success(`Payment of ${currencySymbol}${total.toFixed(2)} processed!`);
             onSuccess?.();
         } catch (err) {
             console.error(err);
@@ -109,9 +114,16 @@ export default function PaymentModal({
                                 FINALIZE TRANSACTION
                             </p>
                             <h2 className="text-3xl font-black text-neutral-900 mt-1">
-                                ${total.toFixed(2)}
+                                {currencySymbol}{total.toFixed(2)}
                             </h2>
-                            <p className="text-xs text-neutral-400 mt-1">{tableName} · Order #{orderNumber}</p>
+                            <p className="text-xs text-neutral-400 mt-1">
+                                {orderType === "dine_in" ? tableName : orderType === "takeaway" ? "Takeaway" : "Delivery"} · Order #{orderNumber}
+                            </p>
+                            {orderType === "delivery" && deliveryDetails && (
+                                <p className="text-xs text-neutral-400 mt-1">
+                                    {deliveryDetails.clientName} · {deliveryDetails.phoneNumber}
+                                </p>
+                            )}
                         </div>
 
                         {/* Payment Methods */}
@@ -190,7 +202,7 @@ export default function PaymentModal({
                             </div>
                             <h2 className="text-xl font-black text-neutral-900">Payment Complete!</h2>
                             <p className="text-sm text-neutral-400 mt-1">
-                                ${total.toFixed(2)} via {paidMethod === "card" ? "Card" : "Cash"}
+                                {currencySymbol}{total.toFixed(2)} via {paidMethod === "card" ? "Card" : "Cash"}
                             </p>
                         </div>
 
@@ -210,6 +222,7 @@ export default function PaymentModal({
                                     paymentMethod={paidMethod}
                                     time={time}
                                     taxRate={taxRate}
+                                    currency={currency}
                                     deliveryDetails={deliveryDetails}
                                 />
                             </div>

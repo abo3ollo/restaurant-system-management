@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useReactToPrint } from "react-to-print";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import {
     AlertTriangle, TrendingUp, CheckCircle2,
     Printer, Star, ShoppingBag, Clock,
 } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 type ShiftSummary = {
     cashierName: string;
@@ -58,6 +59,8 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
     const receiptRef = useRef<HTMLDivElement>(null);
 
     const closeShift = useMutation(api.shifts.closeShift);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
 
     const handlePrint = useReactToPrint({
         contentRef: receiptRef,
@@ -146,7 +149,7 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                                     Closing Balance (Counted Cash)
                                 </label>
                                 <div className="flex items-center border-2 border-neutral-200 focus-within:border-neutral-900 rounded-2xl px-4 py-4 gap-2 transition-colors">
-                                    <DollarSign size={18} className="text-neutral-400" />
+                                    {currencySymbol}
                                     <input
                                         type="number"
                                         value={closingBalance}
@@ -271,27 +274,27 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                                     </p>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-neutral-500">Opening Balance</span>
-                                        <span className="font-bold">${summary.openingBalance.toFixed(2)}</span>
+                                        <span className="font-bold">{currencySymbol}{summary.openingBalance.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-neutral-500">💵 Cash Sales</span>
-                                        <span className="font-bold text-green-600">+${summary.cashSalesTotal.toFixed(2)}</span>
+                                        <span className="font-bold text-green-600">+{currencySymbol}{summary.cashSalesTotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-neutral-500">💳 Card Sales</span>
-                                        <span className="font-bold text-blue-600">${summary.cardSalesTotal.toFixed(2)}</span>
+                                        <span className="font-bold text-blue-600">{currencySymbol}{summary.cardSalesTotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-neutral-500">Total Revenue</span>
-                                        <span className="font-bold text-indigo-600">${summary.totalRevenue.toFixed(2)}</span>
+                                        <span className="font-bold text-indigo-600">{currencySymbol}{summary.totalRevenue.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm border-t border-neutral-200 pt-2">
                                         <span className="text-neutral-500">Expected in Drawer</span>
-                                        <span className="font-black">${summary.expectedBalance.toFixed(2)}</span>
+                                        <span className="font-black">{currencySymbol}{summary.expectedBalance.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-neutral-500">Actual (Counted)</span>
-                                        <span className="font-black">${summary.closingBalance.toFixed(2)}</span>
+                                        <span className="font-black">{currencySymbol}{summary.closingBalance.toFixed(2)}</span>
                                     </div>
                                     <div className={cn(
                                         "flex justify-between text-sm font-black rounded-xl px-3 py-2 mt-1",
@@ -305,7 +308,7 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                                         </span>
                                         <span>
                                             {summary.difference !== 0 && (summary.difference < 0 ? "-" : "+")}
-                                            ${Math.abs(summary.difference).toFixed(2)}
+                                            {currencySymbol}{Math.abs(summary.difference).toFixed(2)}
                                         </span>
                                     </div>
                                 </div>
@@ -324,7 +327,7 @@ export default function CloseShiftFlow({ open, onClose, onConfirmed }: Props) {
                                     </div>
                                     <div className="bg-green-50 rounded-2xl p-3 text-center">
                                         <DollarSign size={14} className="text-green-600 mx-auto mb-1" />
-                                        <p className="text-lg font-black text-green-600">${summary.totalRevenue.toFixed(0)}</p>
+                                        <p className="text-lg font-black text-green-600">{currencySymbol}{summary.totalRevenue.toFixed(0)}</p>
                                         <p className="text-[9px] font-bold text-neutral-400 uppercase">Revenue</p>
                                     </div>
                                 </div>

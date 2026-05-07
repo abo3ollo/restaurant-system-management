@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import PaymentModal from "./PaymentModal";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { getCurrencySymbol } from "@/lib/currency";
 
 
 function NewOrder() {
@@ -58,6 +59,8 @@ function NewOrder() {
     const allOrders = useQuery(api.orders.getOrders);
     const restaurant = useQuery(api.restaurants.getMyRestaurant);
     console.log(restaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
+    
     
     const updateOrder = useMutation(api.orders.updateOrder);
     const { handleConfirm } = useCreateOrder();
@@ -126,7 +129,7 @@ function NewOrder() {
     const handleOpenPayment = (order: any) => {
         const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
         const tax = +(order.total * (taxRate / 100)).toFixed(2);
-        const discount = 5;
+        const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
         const calculatedTotal = +(order.total + tax - discount).toFixed(2);
         
         setPayingOrderId(order._id as Id<"orders">);
@@ -155,7 +158,7 @@ function NewOrder() {
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
     const tax = +(subtotal * (taxRate / 100)).toFixed(2);
-    const discount = 5;
+    const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
     const total = +(subtotal + tax - discount).toFixed(2);
 
     const orders = currentUser?.role === "admin"
@@ -351,7 +354,7 @@ function NewOrder() {
                                 <div className="p-3">
                                     <div className="flex items-start justify-between gap-1">
                                         <h3 className="text-sm font-bold text-neutral-800 leading-tight">{item.name}</h3>
-                                        <span className="text-sm font-black text-amber-600 shrink-0">{item.price}$</span>
+                                        <span className="text-sm font-black text-amber-600 shrink-0">{item.price}{currencySymbol}</span>
                                     </div>
                                     <p className="text-[11px] text-neutral-400 mt-1 line-clamp-1">{item.description}</p>
                                 </div>
@@ -514,10 +517,10 @@ function NewOrder() {
                                     {/* Order footer */}
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-black text-indigo-600">
-                                            ${(() => {
+                                            {getCurrencySymbol(restaurant?.currency)}{(() => {
                                                 const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
                                                 const tax = +(order.total * (taxRate / 100)).toFixed(2);
-                                                const discount = 5;
+                                                const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
                                                 return (order.total + tax - discount).toFixed(2);
                                             })()}
                                         </p>
@@ -543,20 +546,20 @@ function NewOrder() {
                 <div className="px-5 py-4 border-t border-neutral-100 space-y-2 shrink-0">
                     <div className="flex justify-between text-sm text-neutral-500">
                         <span>Subtotal</span>
-                        <span>${subtotal.toFixed(2)}</span>
+                        <span>{getCurrencySymbol(restaurant?.currency)}{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-neutral-500">
                         <span>Tax ({restaurant?.taxRate}%)</span>
-                        <span>${tax.toFixed(2)}</span>
+                        <span>{getCurrencySymbol(restaurant?.currency)}{tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-rose-500 font-medium">
                         <span>Discount (Promo)</span>
-                        <span>-${discount.toFixed(2)}</span>
+                        <span>-{getCurrencySymbol(restaurant?.currency)}{discount.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-sm font-black text-neutral-900 uppercase tracking-wide">
                         <span>Total Amount</span>
-                        <span>${total.toFixed(2)}</span>
+                        <span>{getCurrencySymbol(restaurant?.currency)}{total.toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -611,10 +614,10 @@ function NewOrder() {
                             >
                                 <CreditCard size={15} className="mr-2" />
                                 {payableOrder
-                                    ? `Pay Now — $${(() => {
+                                    ? `Pay Now — ${getCurrencySymbol(restaurant?.currency)}${(() => {
                                         const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
                                         const tax = +(payableOrder.total * (taxRate / 100)).toFixed(2);
-                                        const discount = 5;
+                                        const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
                                         return (payableOrder.total + tax - discount).toFixed(2);
                                     })()}`
                                     : "Pay Now"
@@ -650,6 +653,7 @@ function NewOrder() {
                 deliveryDetails={payingOrder?.deliveryDetails}
                 taxRate={restaurant?.taxRate ?? 0}
                 taxEnabled={restaurant?.taxEnabled ?? false}
+                currency={restaurant?.currency} 
                 onSuccess={() => {
                     // setPayingOrderId(null);
                     // setPayingTotal(0);

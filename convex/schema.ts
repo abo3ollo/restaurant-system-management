@@ -15,6 +15,8 @@ export default defineSchema({
         taxRate: v.optional(v.number()),
         taxEnabled: v.optional(v.boolean()),
         currency: v.optional(v.string()),
+        discountAmount: v.optional(v.number()),
+        discountEnabled: v.optional(v.boolean()),
     }).index("by_slug", ["slug"]),
 
     // ── Users ──────────────────────────────────────────

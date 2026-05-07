@@ -13,6 +13,8 @@ type SettingsForm = {
     taxRate: string;
     taxEnabled: boolean;
     currency: string;
+    discountAmount: string;
+    discountEnabled: boolean;
 };
 
 const CURRENCIES = [
@@ -33,6 +35,8 @@ export default function Settings() {
         taxRate: "0",
         taxEnabled: false,
         currency: "USD",
+        discountAmount: "0",
+        discountEnabled: false,
     });
 
     const [loading, setLoading] = useState(false);
@@ -47,6 +51,8 @@ export default function Settings() {
                 taxRate: restaurant.taxRate?.toString() ?? "0",
                 taxEnabled: restaurant.taxEnabled ?? false,
                 currency: restaurant.currency ?? "USD",
+                discountAmount: restaurant.discountAmount?.toString() ?? "0",
+                discountEnabled: restaurant.discountEnabled ?? false,
             });
         }
     }, [restaurant]);
@@ -57,19 +63,28 @@ export default function Settings() {
         setLoading(true);
         try {
             const taxRateNum = parseFloat(form.taxRate) || 0;
+            const discountAmountNum = parseFloat(form.discountAmount) || 0;
             
             if (taxRateNum < 0 || taxRateNum > 100) {
                 toast.error("Tax rate must be between 0 and 100");
                 return;
             }
 
+            if (discountAmountNum < 0) {
+                toast.error("Discount amount cannot be negative");
+                return;
+            }
+
             await updateSettings({
                 id: restaurant._id,
+                
                 address: form.address || undefined,
                 phone: form.phone || undefined,
                 taxRate: form.taxEnabled ? taxRateNum : 0,
                 taxEnabled: form.taxEnabled,
                 currency: form.currency,
+                discountAmount: form.discountEnabled ? discountAmountNum : 0,
+                discountEnabled: form.discountEnabled,
             });
 
             toast.success("Settings saved successfully!");
@@ -231,6 +246,88 @@ export default function Settings() {
                                         <span className="text-neutral-900 font-bold">Total:</span>
                                         <span className="font-black text-indigo-900">
                                             {currentCurrency?.symbol}{totalAmount.toFixed(2)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── Discount Settings Section ── */}
+                <div className="bg-white rounded-2xl border border-neutral-100 p-6">
+                    <div className="mb-6">
+                        <p className="text-xs font-bold tracking-widest text-neutral-400 uppercase mb-1">
+                            Discount Configuration
+                        </p>
+                        <h3 className="text-lg font-black text-neutral-900">
+                            Discount Settings
+                        </h3>
+                    </div>
+
+                    <div className="space-y-5">
+                        {/* Enable/Disable Discount Toggle */}
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-neutral-50 border border-neutral-100">
+                            <div>
+                                <p className="text-sm font-bold text-neutral-900">Enable Discount</p>
+                                <p className="text-xs text-neutral-400 mt-1">Apply promo discount to all orders</p>
+                            </div>
+                            <button
+                                onClick={() => setForm({ ...form, discountEnabled: !form.discountEnabled })}
+                                className="p-2 rounded-lg transition-colors"
+                            >
+                                {form.discountEnabled ? (
+                                    <ToggleRight size={24} className="text-indigo-600" />
+                                ) : (
+                                    <ToggleLeft size={24} className="text-neutral-300" />
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Discount Amount Input */}
+                        {form.discountEnabled && (
+                            <div>
+                                <label className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
+                                    Discount Amount
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        value={form.discountAmount}
+                                        onChange={(e) => setForm({ ...form, discountAmount: e.target.value })}
+                                        className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50"
+                                        placeholder="5"
+                                    />
+                                    <span className="text-sm font-bold text-neutral-400">{currentCurrency?.symbol}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Discount Preview */}
+                        {form.discountEnabled && (
+                            <div className="p-4 rounded-xl bg-rose-50 border border-rose-100">
+                                <p className="text-xs font-bold text-rose-600 uppercase tracking-widest mb-3">
+                                    Discount Preview
+                                </p>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-neutral-600">Subtotal:</span>
+                                        <span className="font-bold text-neutral-900">
+                                            {currentCurrency?.symbol}{previewAmount.toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-neutral-600">Discount:</span>
+                                        <span className="font-bold text-rose-600">
+                                            -{currentCurrency?.symbol}{parseFloat(form.discountAmount).toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm pt-2 border-t border-rose-100">
+                                        <span className="text-neutral-900 font-bold">Total:</span>
+                                        <span className="font-black text-rose-900">
+                                            {currentCurrency?.symbol}{(previewAmount - parseFloat(form.discountAmount)).toFixed(2)}
                                         </span>
                                     </div>
                                 </div>

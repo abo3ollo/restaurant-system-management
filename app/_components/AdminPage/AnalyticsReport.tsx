@@ -12,6 +12,7 @@ import {
     DollarSign, ShoppingBag, TrendingUp,
     Download, Calendar,
 } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 type Period = "daily" | "weekly" | "monthly";
 
@@ -30,13 +31,13 @@ function exportToCSV(data: any[], filename: string) {
 }
 
 // ── Custom Tooltip ──────────────────────────────────────
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label, currencySymbol }: any) {
     if (!active || !payload?.length) return null;
     return (
         <div className="bg-white border border-neutral-100 rounded-xl px-3 py-2 shadow-lg">
             <p className="text-xs font-bold text-neutral-500 mb-1">{label}</p>
             <p className="text-sm font-black text-indigo-600">
-                ${payload[0].value.toFixed(2)}
+                {currencySymbol}{payload[0].value.toFixed(2)}
             </p>
         </div>
     );
@@ -57,6 +58,8 @@ function HourTooltip({ active, payload, label }: any) {
 function AnalyticsReport() {
     const [period, setPeriod] = useState<Period>("daily");
     const data = useQuery(api.orders.getReportsData);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
     console.log(data);
     
 
@@ -76,7 +79,7 @@ function AnalyticsReport() {
     const SUMMARY = [
         {
             label: "Total Revenue",
-            value: `$${data.totalRevenue.toFixed(2)}`,
+            value: `${currencySymbol}${data.totalRevenue.toFixed(2)}`,
             icon: DollarSign,
             color: "bg-indigo-100 text-indigo-600",
         },
@@ -94,13 +97,13 @@ function AnalyticsReport() {
         },
         {
             label: "Avg Order Value",
-            value: `$${data.avgOrderValue.toFixed(2)}`,
+            value: `${currencySymbol}${data.avgOrderValue.toFixed(2)}`,
             icon: DollarSign,
             color: "bg-rose-100 text-rose-600",
         },
         ...(data.taxEnabled && data.taxRate > 0 ? [{
             label: `Tax Collected (${data.taxRate}%)`,
-            value: `$${data.totalTaxCollected.toFixed(2)}`,
+            value: `${currencySymbol}${data.totalTaxCollected.toFixed(2)}`,
             icon: DollarSign,
             color: "bg-purple-100 text-purple-600",
         }] : []),
@@ -185,9 +188,9 @@ function AnalyticsReport() {
                             tick={{ fontSize: 11, fill: "#a3a3a3", fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={v => `$${v}`}
+                            tickFormatter={v => `${currencySymbol}${v}`}
                         />
-                        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f5f5f5" }} />
+                        <Tooltip content={<CustomTooltip currencySymbol={currencySymbol} />} cursor={{ fill: "#f5f5f5" }} />
                         <Bar dataKey="revenue" fill="#6366f1" radius={[6, 6, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>

@@ -98,11 +98,6 @@ export default function AdminDashboard() {
                 </nav>
 
                 <div className="pt-4 border-t border-neutral-100 flex flex-col gap-1">
-                    {[{ label: "Settings", icon: Settings }, { label: "Support", icon: HelpCircle }].map(({ label, icon: Icon }) => (
-                        <button key={label} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase text-neutral-400 hover:bg-neutral-50 hover:text-neutral-700 transition-all">
-                            <Icon size={15} />{label}
-                        </button>
-                    ))}
                     <button onClick={handleSignOut}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase text-red-400 hover:bg-red-50 hover:text-red-600 transition-all mt-1">
                         <LogOut size={15} /> Sign out

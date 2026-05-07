@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { DollarSign, Loader2, Unlock } from "lucide-react";
 import CloseShiftFlow from "./CloseShiftFlow";
+import { getCurrencySymbol } from "@/lib/currency";
 
 type Props = {
     children: (onCloseShift: () => void) => React.ReactNode;
@@ -14,6 +15,8 @@ type Props = {
 export default function ShiftGate({ children }: Props) {
     const currentShift = useQuery(api.shifts.getCurrentShift);
     const startShift = useMutation(api.shifts.startShift);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
 
     const [openingBalance, setOpeningBalance] = useState("");
     const [notes, setNotes] = useState("");
@@ -75,7 +78,7 @@ export default function ShiftGate({ children }: Props) {
                                     Opening Balance
                                 </label>
                                 <div className="flex items-center border-2 border-neutral-200 focus-within:border-neutral-900 rounded-2xl px-4 py-3.5 gap-2 transition-colors">
-                                    <DollarSign size={16} className="text-neutral-400" />
+                                    {currencySymbol}
                                     <input
                                         type="number"
                                         value={openingBalance}

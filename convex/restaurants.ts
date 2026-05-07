@@ -285,6 +285,8 @@ export const updateSettings = mutation({
         taxRate: v.optional(v.number()),
         taxEnabled: v.optional(v.boolean()),
         currency: v.optional(v.string()),
+        discountAmount: v.optional(v.number()),
+        discountEnabled: v.optional(v.boolean()),
         address: v.optional(v.string()),
         phone: v.optional(v.string()),
     },

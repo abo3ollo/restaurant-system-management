@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { Clock, CheckCircle, ChefHat, Utensils, CreditCard } from "lucide-react";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { getCurrencySymbol } from "@/lib/currency";
 import { log } from "console";
 
 const STATUS_CONFIG = {
@@ -35,6 +36,7 @@ type Order = {
 export default function MyOrders({ orders }: { orders: Order[] }) {
 
     const allOrders = useQuery(api.orders.getOrders);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
     console.log(allOrders);
     
     
@@ -107,7 +109,12 @@ export default function MyOrders({ orders }: { orders: Order[] }) {
                         {/* Footer */}
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-black text-amber-600">
-                                ${order.total.toFixed(2)}
+                                {getCurrencySymbol(restaurant?.currency)}{(() => {
+                                    const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
+                                    const tax = +(order.total * (taxRate / 100)).toFixed(2);
+                                    const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
+                                    return (order.total + tax - discount).toFixed(2);
+                                })()}
                             </span>
                             {/* Status indicator */}
                             {order.status === "pending" && (
