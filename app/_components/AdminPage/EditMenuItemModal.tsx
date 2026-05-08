@@ -30,6 +30,7 @@ import {
     InputGroupText,
     InputGroupTextarea,
 } from "@/components/ui/input-group";
+import { getCurrencySymbol } from "@/lib/currency";
 
 // ── Schema ───────────────────────────────────────────────
 const formSchema = z.object({
@@ -53,6 +54,8 @@ interface EditMenuItemModalProps {
 export function EditMenuItemModal({ item, open, onOpenChange }: EditMenuItemModalProps) {
     const categories = useQuery(api.menuItems.getMenu);
     const updateItem = useMutation(api.menuItems.editMenuItem);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
     const [existingImage, setExistingImage] = useState<string>("");
 
     const form = useForm<FormValues>({
@@ -154,7 +157,7 @@ export function EditMenuItemModal({ item, open, onOpenChange }: EditMenuItemModa
                                         <FieldLabel>Price</FieldLabel>
                                         <InputGroup>
                                             <InputGroupAddon align="inline-start">
-                                                <InputGroupText>$</InputGroupText>
+                                                <InputGroupText>{currencySymbol}</InputGroupText>
                                             </InputGroupAddon>
                                             <Input
                                                 {...field}

@@ -7,6 +7,7 @@ import { Edit2, Trash2 } from 'lucide-react';
 import { AddMenuItemsModal } from './AddMenuItemsModal';
 import { EditMenuItemModal } from './EditMenuItemModal';
 import { toast } from 'sonner';
+import { getCurrencySymbol } from '@/lib/currency';
 
 export default function MenuItems() {
     const menuData = useQuery(api.menuItems.getMenu);
@@ -15,6 +16,8 @@ export default function MenuItems() {
     const [editModalOpen, setEditModalOpen] = useState(false);
 
     const deleteItem = useMutation(api.menuItems.deleteMenuItem);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
 
     if (!menuData) {
         return <div className="p-8">Loading...</div>;
@@ -122,7 +125,7 @@ export default function MenuItems() {
 
                             {/* Price */}
                             <p className="text-blue-600 font-bold text-lg mb-4">
-                                ${item.price.toFixed(2)}
+                                {currencySymbol}{item.price.toFixed(2)}
                             </p>
 
                             {/* Availability Toggle */}

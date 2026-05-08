@@ -7,9 +7,12 @@ import {
     Store, Users, DollarSign, TrendingUp,
     CheckCircle, AlertTriangle,
 } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 export default function SuperAdminDashboard() {
     const restaurants = useQuery(api.restaurants.getAll);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
     console.log(restaurants);
     
 
@@ -43,7 +46,7 @@ export default function SuperAdminDashboard() {
         },
         {
             label: "Total Revenue",
-            value: `$${totalRevenue.toFixed(2)}`,
+            value: `${currencySymbol}${totalRevenue.toFixed(2)}`,
             icon: DollarSign,
             color: "bg-emerald-100 text-emerald-600",
             sub: "all time",
@@ -157,7 +160,7 @@ export default function SuperAdminDashboard() {
                                     <span className="text-sm font-bold text-neutral-700">{r.orderCount}</span>
                                 </td>
                                 <td className="px-5 py-3">
-                                    <span className="text-sm font-black text-indigo-600">${r.revenue.toFixed(2)}</span>
+                                    <span className="text-sm font-black text-indigo-600">{currencySymbol}{r.revenue.toFixed(2)}</span>
                                 </td>
                                 <td className="px-5 py-3">
                                     <span className={cn(

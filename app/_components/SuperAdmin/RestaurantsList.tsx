@@ -11,12 +11,15 @@ import {
     Store, Users, DollarSign, Search,
     ChevronRight, Pause, Play, Trash2, Loader2,
 } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 export default function RestaurantsList() {
     const router = useRouter();
     const restaurants = useQuery(api.restaurants.getAll);
     const updateRestaurant = useMutation(api.restaurants.updateRestaurant);
     const deleteRestaurant = useMutation(api.restaurants.deleteRestaurant);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
 
     const [search, setSearch] = useState("");
     const [filterPlan, setFilterPlan] = useState<"all" | "free" | "pro" | "enterprise">("all");
@@ -183,7 +186,7 @@ export default function RestaurantsList() {
                                 </div>
                                 <div className="bg-neutral-50 rounded-xl p-3 text-center">
                                     <DollarSign size={12} className="text-neutral-400 mx-auto mb-1" />
-                                    <p className="text-base font-black text-indigo-600">${r.revenue.toFixed(0)}</p>
+                                    <p className="text-base font-black text-indigo-600">{currencySymbol}{r.revenue.toFixed(0)}</p>
                                     <p className="text-[9px] font-bold text-neutral-400 uppercase">Revenue</p>
                                 </div>
                             </div>

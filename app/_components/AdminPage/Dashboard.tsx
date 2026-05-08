@@ -7,6 +7,7 @@ import {
     TrendingUp, TrendingDown, DollarSign,
     ShoppingBag, Star, ArrowUpRight, ChevronRight,
 } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 const STATUS_STYLE: Record<string, string> = {
     pending:   "bg-yellow-100 text-yellow-700",
@@ -33,6 +34,8 @@ function timeAgo(timestamp: number) {
 
 export default function Dashboard() {
     const stats = useQuery(api.orders.getDashboardStats);
+    const restaurant = useQuery(api.restaurants.getMyRestaurant);
+    const currencySymbol = getCurrencySymbol(restaurant?.currency);
 
     if (!stats) return (
         <div className="flex items-center justify-center h-64 text-neutral-400">
@@ -43,7 +46,7 @@ export default function Dashboard() {
     const STATS = [
         {
             label: "Today's Revenue",
-            value: `$${stats.todayRevenue.toFixed(2)}`,
+            value: `${currencySymbol}${stats.todayRevenue.toFixed(2)}`,
             change: `${stats.revenueChange > 0 ? "+" : ""}${stats.revenueChange}%`,
             up: stats.revenueChange >= 0,
             icon: DollarSign,
@@ -59,7 +62,7 @@ export default function Dashboard() {
         },
         {
             label: "Avg. Order Value",
-            value: `$${stats.avgOrderValue.toFixed(1)}`,
+            value: `${currencySymbol}${stats.avgOrderValue.toFixed(1)}`,
             change: `${stats.avgChange > 0 ? "+" : ""}${stats.avgChange}%`,
             up: stats.avgChange >= 0,
             icon: TrendingUp,
@@ -136,7 +139,7 @@ export default function Dashboard() {
                                         {o.itemCount} items
                                     </span>
                                     <span className="text-sm font-black text-neutral-800 w-16 text-right">
-                                        ${o.total.toFixed(2)}
+                                        {currencySymbol}{o.total.toFixed(2)}
                                     </span>
                                     <span className={cn(
                                         "text-[10px] font-bold tracking-wide px-2 py-1 rounded-lg uppercase",
@@ -178,7 +181,7 @@ export default function Dashboard() {
                                             </span>
                                         </div>
                                         <span className="text-xs font-black text-neutral-800">
-                                            ${item.revenue.toFixed(0)}
+                                            {currencySymbol}{item.revenue.toFixed(0)}
                                         </span>
                                     </div>
                                     <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">

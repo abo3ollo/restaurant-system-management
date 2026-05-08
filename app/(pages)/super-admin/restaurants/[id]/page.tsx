@@ -56,7 +56,7 @@ export default function RestaurantDetailsPage() {
         <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-neutral-900 flex items-center justify-center">
-                    <span className="text-white font-black text-lg leading-none">f</span>
+                    <span className="text-white font-black text-lg leading-none">S</span>
                 </div>
                 <p className="text-sm text-neutral-400">Loading...</p>
             </div>
