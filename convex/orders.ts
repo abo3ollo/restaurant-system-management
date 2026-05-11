@@ -1,6 +1,9 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { getRestaurantContext } from "./context";
+import {
+    getRestaurantContext,
+    getRestaurantContextWithSubscription,
+} from "./context";
 
 // convex/orders.ts - Update getOrders
 export const getOrders = query({
@@ -75,11 +78,13 @@ export const getOrders = query({
 // cashiers see their own orders automatically
 export const getMyOrders = query({
     args: {
-        orderType: v.optional(v.union(
-            v.literal("dine_in"),
-            v.literal("takeaway"),
-            v.literal("delivery"),
-        )),
+        orderType: v.optional(
+            v.union(
+                v.literal("dine_in"),
+                v.literal("takeaway"),
+                v.literal("delivery"),
+            ),
+        ),
     },
     handler: async (ctx, args) => {
         const { restaurantId, user } = await getRestaurantContext(ctx);
@@ -89,19 +94,19 @@ export const getMyOrders = query({
             .query("orders")
             .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .filter((q) => q.eq(q.field("userId"), user._id));
-        
+
         // Add order type filter if provided
         if (args.orderType) {
             query = query.filter((q) => q.eq(q.field("orderType"), args.orderType));
         }
-        
+
         const myOrders = await query.order("desc").collect();
 
         return await Promise.all(
             myOrders.map(async (order) => {
                 // Handle table based on order type
                 let displayName = "Unknown";
-                
+
                 if (order.orderType === "dine_in" && order.tableId) {
                     const table = await ctx.db.get(order.tableId);
                     displayName = table?.name ?? "Unknown Table";
@@ -110,7 +115,7 @@ export const getMyOrders = query({
                 } else if (order.orderType === "delivery") {
                     displayName = "Delivery";
                 }
-                
+
                 const items = await ctx.db
                     .query("orderItems")
                     .withIndex("by_order", (q) => q.eq("orderId", order._id))
@@ -137,8 +142,12 @@ export const getMyOrders = query({
                 return {
                     ...order,
                     tableName: displayName,
-                    orderTypeLabel: order.orderType === "dine_in" ? "Dine In" : 
-                                   order.orderType === "takeaway" ? "Takeaway" : "Delivery",
+                    orderTypeLabel:
+                        order.orderType === "dine_in"
+                            ? "Dine In"
+                            : order.orderType === "takeaway"
+                                ? "Takeaway"
+                                : "Delivery",
                     paymentMethod: payment?.method ?? "N/A",
                     items: itemsWithDetails,
                 };
@@ -163,16 +172,18 @@ export const createOrder = mutation({
                 note: v.optional(v.string()),
             }),
         ),
-        deliveryDetails: v.optional(v.object({
-            clientName: v.string(),
-            phoneNumber: v.string(),
-            address: v.string(),
-            floorNumber: v.optional(v.string()),
-            apartment: v.optional(v.string()),
-        })),
+        deliveryDetails: v.optional(
+            v.object({
+                clientName: v.string(),
+                phoneNumber: v.string(),
+                address: v.string(),
+                floorNumber: v.optional(v.string()),
+                apartment: v.optional(v.string()),
+            }),
+        ),
     },
     handler: async (ctx, args) => {
-        const { restaurantId } = await getRestaurantContext(ctx);
+        const { restaurantId } = await getRestaurantContextWithSubscription(ctx);
 
         let total = 0;
         for (const item of args.items) {
@@ -414,7 +425,7 @@ export const getDashboardStats = query({
 export const getReportsData = query({
     handler: async (ctx) => {
         const { restaurantId } = await getRestaurantContext(ctx);
-
+        
         // Filter by restaurant for all queries
         const orders = await ctx.db
             .query("orders")
@@ -431,10 +442,11 @@ export const getReportsData = query({
             .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurantId))
             .collect();
 
-        // Get restaurant tax settings
+        // Get restaurant tax settings - FIX: Use the correct ID format
+        // restaurantId is already the ID, no need to get it again
         const restaurant = await ctx.db.get(restaurantId);
-        const taxRate = restaurant?.taxRate ?? 0;
-        const taxEnabled = restaurant?.taxEnabled ?? false;
+        const taxRate = (restaurant as any)?.taxRate ?? 0;
+        const taxEnabled = (restaurant as any)?.taxEnabled ?? false;
 
         // ── Calculate tax collected ──
         let totalTaxCollected = 0;
@@ -464,6 +476,8 @@ export const getReportsData = query({
                 const key = new Date(o.createdAt).toISOString().split("T")[0];
                 if (key in dailyRevenue) dailyRevenue[key] += o.total;
             });
+
+        // ── Weekly revenue (last 4 weeks) ──
         const weeklyRevenue: Record<string, number> = {};
         for (let i = 3; i >= 0; i--) {
             weeklyRevenue[`Week ${4 - i}`] = 0;
@@ -484,18 +498,8 @@ export const getReportsData = query({
         // ── Monthly revenue (last 6 months) ──
         const monthlyRevenue: Record<string, number> = {};
         const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
         ];
         for (let i = 5; i >= 0; i--) {
             const d = new Date();

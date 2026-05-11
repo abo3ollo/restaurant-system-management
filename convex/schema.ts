@@ -3,13 +3,15 @@ import { v } from "convex/values";
 
 export default defineSchema({
     // ── Restaurants ────────────────────────────────────
+    // IMPORTANT: Plan is now ONLY a display field from active subscriptions.
+    // ALL access control is driven by the subscriptions table.
     restaurants: defineTable({
         name: v.string(),
         slug: v.string(),
         logo: v.optional(v.string()),
         address: v.optional(v.string()),
         phone: v.optional(v.string()),
-        plan: v.union(v.literal("free"), v.literal("pro"), v.literal("enterprise")),
+        currentPlan: v.optional(v.union(v.literal("free"), v.literal("monthly"), v.literal("yearly"))), // Display only
         status: v.union(v.literal("active"), v.literal("suspended")),
         createdAt: v.number(),
         taxRate: v.optional(v.number()),
@@ -86,13 +88,15 @@ export default defineSchema({
         total: v.number(),
         createdAt: v.number(),
         paymentMethod: v.optional(v.union(v.literal("cash"), v.literal("card"))),
-        deliveryDetails: v.optional(v.object({
-            clientName: v.string(),
-            phoneNumber: v.string(),
-            address: v.string(),
-            floorNumber: v.optional(v.string()),
-            apartment: v.optional(v.string()),
-        })),
+        deliveryDetails: v.optional(
+            v.object({
+                clientName: v.string(),
+                phoneNumber: v.string(),
+                address: v.string(),
+                floorNumber: v.optional(v.string()),
+                apartment: v.optional(v.string()),
+            }),
+        ),
     })
         .index("by_restaurant", ["restaurantId"])
         .index("by_table", ["tableId"]),
@@ -139,20 +143,102 @@ export default defineSchema({
         topItem: v.optional(v.string()),
         status: v.union(v.literal("open"), v.literal("closed")),
         notes: v.optional(v.string()),
-    }).index("by_cashier", ["cashierId"])
+    })
+        .index("by_cashier", ["cashierId"])
         .index("by_restaurant", ["restaurantId"])
         .index("by_restaurant_status", ["restaurantId", "status"]),
 
     invitations: defineTable({
         restaurantId: v.id("restaurants"),
         email: v.string(),
-        role: v.union(v.literal("cashier"), v.literal("waiter"), v.literal("admin")),
+        role: v.union(
+            v.literal("cashier"),
+            v.literal("waiter"),
+            v.literal("admin"),
+        ),
         token: v.string(),
-        status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("expired")),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("accepted"),
+            v.literal("expired"),
+        ),
         createdAt: v.number(),
         expiresAt: v.number(),
     })
         .index("by_token", ["token"])
         .index("by_restaurant", ["restaurantId"])
         .index("by_email", ["email"]),
+
+    subscriptions: defineTable({
+        restaurantId: v.id("restaurants"),
+        plan: v.union(
+            v.literal("trial"),
+            v.literal("monthly"),
+            v.literal("yearly"),
+        ),
+        status: v.union(
+            v.literal("trialing"),
+            v.literal("active"),
+            v.literal("expired"),
+            v.literal("cancelled"),
+            v.literal("past_due"),
+        ),
+        source: v.union(
+            v.literal("payment"),
+            v.literal("manual"),
+            v.literal("gift"),
+            v.literal("promo"),
+            v.literal("trial"),
+        ),
+        startsAt: v.number(),
+        expiresAt: v.number(),
+        trialEndsAt: v.optional(v.number()),
+        cancelledAt: v.optional(v.number()),
+        autoRenew: v.boolean(),
+        grantedBy: v.optional(v.string()), // clerkId of admin who granted
+        paymobOrderId: v.optional(v.string()),
+        paymobTransactionId: v.optional(v.string()),
+        paymentProvider: v.optional(v.string()),
+        paymentMethod: v.optional(v.string()),
+        notes: v.optional(v.string()),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+        .index("by_restaurant", ["restaurantId"])
+        .index("by_status", ["status"])
+        .index("by_source", ["source"]),
+
+    billingPayments: defineTable({
+        restaurantId: v.id("restaurants"),
+        subscriptionId: v.id("subscriptions"),
+        amount: v.number(),
+        currency: v.string(),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("success"),
+            v.literal("failed"),
+            v.literal("refunded"),
+        ),
+        provider: v.string(),
+        transactionId: v.optional(v.string()),
+        method: v.optional(v.string()),
+        paymobOrderId: v.optional(v.string()),
+        createdAt: v.number(),
+    })
+        .index("by_restaurant", ["restaurantId"])
+        .index("by_subscription", ["subscriptionId"])
+        .index("by_transaction", ["transactionId"]),
+
+    billingLogs: defineTable({
+        restaurantId: v.id("restaurants"),
+        type: v.union(
+            v.literal("info"),
+            v.literal("success"),
+            v.literal("warning"),
+            v.literal("error"),
+        ),
+        message: v.string(),
+        metadata: v.optional(v.string()),
+        createdAt: v.number(),
+    }).index("by_restaurant", ["restaurantId"]),
 });

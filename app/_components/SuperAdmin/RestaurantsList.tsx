@@ -22,14 +22,14 @@ export default function RestaurantsList() {
     const currencySymbol = getCurrencySymbol(restaurant?.currency);
 
     const [search, setSearch] = useState("");
-    const [filterPlan, setFilterPlan] = useState<"all" | "free" | "pro" | "enterprise">("all");
+    const [filterPlan, setFilterPlan] = useState<"all" | "free" | "monthly" | "yearly">("all");
     const [filterStatus, setFilterStatus] = useState<"all" | "active" | "suspended">("all");
     const [loadingId, setLoadingId] = useState<string | null>(null);
 
     const filtered = restaurants
         ?.filter(r => r.name.toLowerCase().includes(search.toLowerCase()) ||
                       r.slug.toLowerCase().includes(search.toLowerCase()))
-        ?.filter(r => filterPlan === "all" || r.plan === filterPlan)
+        ?.filter(r => filterPlan === "all" || r.currentPlan === filterPlan)
         ?.filter(r => filterStatus === "all" || r.status === filterStatus)
         ?? [];
 
@@ -88,7 +88,7 @@ export default function RestaurantsList() {
 
                 {/* Plan filter */}
                 <div className="flex gap-1 bg-neutral-100 rounded-xl p-1">
-                    {(["all", "free", "pro", "enterprise"] as const).map(p => (
+                    {(["all", "free", "monthly", "yearly"] as const).map(p => (
                         <button
                             key={p}
                             onClick={() => setFilterPlan(p)}
@@ -152,11 +152,11 @@ export default function RestaurantsList() {
                                 <div className="flex items-center gap-2">
                                     <span className={cn(
                                         "text-[10px] font-bold px-2 py-1 rounded-lg uppercase",
-                                        r.plan === "pro" ? "bg-indigo-100 text-indigo-700" :
-                                        r.plan === "enterprise" ? "bg-purple-100 text-purple-700" :
+                                        r.currentPlan === "monthly" ? "bg-indigo-100 text-indigo-700" :
+                                        r.currentPlan === "yearly" ? "bg-purple-100 text-purple-700" :
                                         "bg-neutral-100 text-neutral-500"
                                     )}>
-                                        {r.plan}
+                                        {r.currentPlan || "free"}
                                     </span>
                                     <span className={cn(
                                         "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg",

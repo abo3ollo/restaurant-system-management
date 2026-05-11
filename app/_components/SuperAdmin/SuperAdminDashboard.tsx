@@ -146,11 +146,11 @@ export default function SuperAdminDashboard() {
                                 <td className="px-5 py-3">
                                     <span className={cn(
                                         "text-[10px] font-bold px-2 py-1 rounded-lg uppercase",
-                                        r.plan === "pro" ? "bg-indigo-100 text-indigo-700" :
-                                        r.plan === "enterprise" ? "bg-purple-100 text-purple-700" :
+                                        r.currentPlan === "monthly" ? "bg-indigo-100 text-indigo-700" :
+                                        r.currentPlan === "yearly" ? "bg-purple-100 text-purple-700" :
                                         "bg-neutral-100 text-neutral-500"
                                     )}>
-                                        {r.plan}
+                                        {r.currentPlan}
                                     </span>
                                 </td>
                                 <td className="px-5 py-3">
