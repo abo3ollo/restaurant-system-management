@@ -429,3 +429,98 @@ export const getAllSubscriptions = query({
         }));
     },
 });
+
+// convex/subscriptions.ts - Add this mutation
+
+// ── Webhook activation (no auth required) ───────────────
+// convex/subscriptions.ts - Updated webhookActivateSubscription
+
+export const webhookActivateSubscription = mutation({
+    args: {
+        restaurantId: v.id("restaurants"),
+        plan: v.union(v.literal("monthly"), v.literal("yearly")),
+        transactionId: v.string(),
+        amount: v.number(),
+        paymentMethod: v.string(),
+    },
+    handler: async (ctx, args) => {
+        try {
+            console.log("Webhook activating subscription for:", args.restaurantId);
+            
+            const now = Date.now();
+            const durationDays = args.plan === "monthly" ? 30 : 365;
+            const expiresAt = now + (durationDays * 24 * 60 * 60 * 1000);
+            
+            // Get existing subscription or create new one
+            const existingSub = await ctx.db
+                .query("subscriptions")
+                .withIndex("by_restaurant", q => q.eq("restaurantId", args.restaurantId))
+                .first();
+            
+            let subscriptionId;
+            
+            if (existingSub) {
+                // Update existing subscription
+                await ctx.db.patch(existingSub._id, {
+                    plan: args.plan,
+                    status: "active",
+                    source: "payment",
+                    startsAt: now,
+                    expiresAt,
+                    autoRenew: true,
+                    updatedAt: now,
+                });
+                subscriptionId = existingSub._id;
+                console.log("Updated existing subscription");
+            } else {
+                // Create new subscription
+                subscriptionId = await ctx.db.insert("subscriptions", {
+                    restaurantId: args.restaurantId,
+                    plan: args.plan,
+                    status: "active",
+                    source: "payment",
+                    startsAt: now,
+                    expiresAt,
+                    autoRenew: true,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+                console.log("Created new subscription");
+            }
+            
+            // Create payment record - matching your schema exactly
+            await ctx.db.insert("billingPayments", {
+                restaurantId: args.restaurantId,
+                subscriptionId: subscriptionId,
+                amount: args.amount,
+                currency: "EGP",
+                status: "success",
+                provider: "paymob",
+                transactionId: args.transactionId,
+                method: args.paymentMethod,
+                createdAt: now,
+            });
+            
+            // Create billing log
+            await ctx.db.insert("billingLogs", {
+                restaurantId: args.restaurantId,
+                type: "success",
+                message: `✅ Paid ${args.amount} EGP for ${args.plan === "monthly" ? "Monthly" : "Yearly"} plan. Transaction: ${args.transactionId}`,
+                createdAt: now,
+            });
+            
+            // Update restaurant current plan
+            await ctx.db.patch(args.restaurantId, {
+                currentPlan: args.plan,
+            });
+            
+            console.log(`✅ Subscription activated successfully for restaurant ${args.restaurantId}`);
+            
+            return { success: true };
+            
+        } catch (error) {
+            console.error("Webhook activation error:", error);
+            throw new Error(`Failed to activate subscription: ${error}`);
+        }
+    },
+});
