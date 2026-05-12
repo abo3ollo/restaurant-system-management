@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { useSubscription } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
@@ -11,11 +11,10 @@ import { toast } from "sonner";
 import {
     CheckCircle2, Clock, XCircle, AlertTriangle,
     Zap, RefreshCw, Loader2, DollarSign,
-    FileText, Shield, Gift, Sparkles,
-    Crown, Star, Tag,
+    FileText, Shield, Gift, Star, Tag,
+    Crown, Sparkles, PartyPopper,
 } from "lucide-react";
 
-// ── Source badge config ────────────────────────────────
 const SOURCE_CONFIG = {
     payment: { label: "Paid",          icon: DollarSign, cls: "bg-green-100 text-green-700" },
     manual:  { label: "Admin Granted", icon: Crown,      cls: "bg-indigo-100 text-indigo-700" },
@@ -32,11 +31,7 @@ const PLANS = [
         period: "7 days",
         color: "border-neutral-200",
         btnClass: "bg-neutral-100 text-neutral-500 cursor-default",
-        features: [
-            "✅ All Features included",
-            "✅ No Credit Card Required",
-            "⏱ 7 Days Only",
-        ],
+        features: ["✅ All Features included", "✅ No Credit Card Required", "⏱ 7 Days Only"],
     },
     {
         key: "monthly",
@@ -45,13 +40,7 @@ const PLANS = [
         period: "per month",
         color: "border-indigo-300",
         btnClass: "bg-indigo-600 hover:bg-indigo-700 text-white",
-        features: [
-            "✅ Unlimited Everything",
-            "✅ Priority Support",
-            "✅ Analytics",
-            "✅ Multi-branch",
-            "✅ Auto Renew",
-        ],
+        features: ["✅ Unlimited Everything", "✅ Priority Support", "✅ Analytics", "✅ Auto Renew"],
     },
     {
         key: "yearly",
@@ -61,23 +50,17 @@ const PLANS = [
         color: "border-green-300",
         btnClass: "bg-green-600 hover:bg-green-700 text-white",
         badge: "Save 20%",
-        features: [
-            "✅ Everything in Monthly",
-            "✅ Save 3,600 EGP/year",
-            "✅ Priority Support",
-            "✅ Analytics",
-            "✅ Auto Renew",
-        ],
+        features: ["✅ Everything in Monthly", "✅ Save 3,600 EGP/year", "✅ Priority Support", "✅ Auto Renew"],
     },
 ];
 
 function StatusBadge({ status }: { status: string }) {
     const configs: Record<string, { icon: any; label: string; cls: string }> = {
-        trialing:  { icon: Clock,          label: "Free Trial", cls: "bg-amber-100 text-amber-700" },
-        active:    { icon: CheckCircle2,   label: "Active",     cls: "bg-green-100 text-green-700" },
-        expired:   { icon: XCircle,        label: "Expired",    cls: "bg-red-100 text-red-600" },
-        cancelled: { icon: AlertTriangle,  label: "Cancelled",  cls: "bg-neutral-100 text-neutral-500" },
-        past_due:  { icon: AlertTriangle,  label: "Past Due",   cls: "bg-orange-100 text-orange-600" },
+        trialing:  { icon: Clock,         label: "Free Trial", cls: "bg-amber-100 text-amber-700" },
+        active:    { icon: CheckCircle2,  label: "Active",     cls: "bg-green-100 text-green-700" },
+        expired:   { icon: XCircle,       label: "Expired",    cls: "bg-red-100 text-red-600" },
+        cancelled: { icon: AlertTriangle, label: "Cancelled",  cls: "bg-neutral-100 text-neutral-500" },
+        past_due:  { icon: AlertTriangle, label: "Past Due",   cls: "bg-orange-100 text-orange-600" },
     };
     const c = configs[status] ?? configs.expired;
     const Icon = c.icon;
@@ -100,20 +83,92 @@ function SourceBadge({ source }: { source?: string }) {
     );
 }
 
-export default function BillingPage() {
+// ── Payment Success Banner ─────────────────────────────
+function PaymentSuccessBanner({
+    plan, onDismiss
+}: { plan: string | null; onDismiss: () => void }) {
+    const planLabel = plan === "monthly" ? "Monthly Plan" : plan === "yearly" ? "Yearly Plan" : "Plan";
+
+    return (
+        <div className="bg-linear-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+            <div className="relative flex items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={32} className="text-white" />
+                </div>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-xl font-black">Payment Successful! 🎉</h2>
+                    </div>
+                    <p className="text-green-100 text-sm">
+                        Your <strong>{planLabel}</strong> is now active. Enjoy full access to all Servix features!
+                    </p>
+                    <div className="flex items-center gap-4 mt-3">
+                        {[
+                            "✅ Unlimited access",
+                            "✅ All features unlocked",
+                            "✅ Priority support",
+                        ].map(f => (
+                            <span key={f} className="text-xs text-green-100 font-semibold">{f}</span>
+                        ))}
+                    </div>
+                </div>
+                <button
+                    onClick={onDismiss}
+                    className="text-white/70 hover:text-white transition-colors text-xl leading-none shrink-0"
+                >×</button>
+            </div>
+        </div>
+    );
+}
+
+export  function BillingPage() {
     const { user } = useUser();
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // ← Read success params from URL
+    const isSuccess  = searchParams.get("success") === "true";
+    const paidPlan   = searchParams.get("plan");
+
+    const [showSuccess, setShowSuccess] = useState(isSuccess);
+    const [payingPlan, setPayingPlan]   = useState<"monthly" | "yearly" | null>(null);
+    const [loading, setLoading]         = useState(false);
+
     const { subscription, isTrialing, daysLeft, planLabel, isExpired, sourceLabel } = useSubscription();
-    const payments = useQuery(api.subscriptions.getBillingPayments);
-    const logs = useQuery(api.subscriptions.getBillingLogs);
-    const cancelSub = useMutation(api.subscriptions.cancelSubscription);
+    const payments    = useQuery(api.subscriptions.getBillingPayments);
+    const logs        = useQuery(api.subscriptions.getBillingLogs);
+    const currentUser = useQuery(api.users.getCurrentUser);
+    const cancelSub   = useMutation(api.subscriptions.cancelSubscription);
     const toggleRenew = useMutation(api.subscriptions.toggleAutoRenew);
 
-    const [payingPlan, setPayingPlan] = useState<"monthly" | "yearly" | null>(null);
-    const [loading, setLoading] = useState(false);
+    // ← Clean URL after showing success banner
+    useEffect(() => {
+        if (isSuccess) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("success");
+            url.searchParams.delete("plan");
+            window.history.replaceState({}, "", url.toString());
+        }
+    }, []);
+
+    // ← Show toast when payment succeeds
+    useEffect(() => {
+        if (isSuccess) {
+            toast.success("🎉 Payment successful! Your subscription is now active.", {
+                duration: 6000,
+            });
+        }
+    }, []);
 
     const handleUpgrade = async (plan: "monthly" | "yearly") => {
-        if (!user) return;
+        if (!user || !currentUser?.restaurantId) {
+            toast.error("Unable to process payment. Please try again.");
+            return;
+        }
         setPayingPlan(plan);
         setLoading(true);
         try {
@@ -122,8 +177,8 @@ export default function BillingPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     plan,
-                    restaurantId: "restaurant_id_here", // You'll need to get this from context
-                    restaurantName: "My Restaurant",
+                    restaurantId: currentUser.restaurantId,
+                    restaurantName: currentUser.name ?? "My Restaurant",
                     email: user.emailAddresses[0]?.emailAddress,
                     name: user.fullName,
                 }),
@@ -173,8 +228,16 @@ export default function BillingPage() {
                     </button>
                 </div>
 
+                {/* ← Payment Success Banner */}
+                {showSuccess && (
+                    <PaymentSuccessBanner
+                        plan={paidPlan}
+                        onDismiss={() => setShowSuccess(false)}
+                    />
+                )}
+
                 {/* Expired Banner */}
-                {isExpired && (
+                {isExpired && !showSuccess && (
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
                             <XCircle size={22} className="text-red-500" />
@@ -191,7 +254,7 @@ export default function BillingPage() {
                 )}
 
                 {/* Trial Banner */}
-                {isTrialing && !isExpired && (
+                {isTrialing && !isExpired && !showSuccess && (
                     <div className={cn(
                         "rounded-2xl p-5 flex items-center gap-4 border",
                         daysLeft <= 2 ? "bg-red-50 border-red-200" :
@@ -223,10 +286,15 @@ export default function BillingPage() {
 
                 {/* Current Plan Card */}
                 {subscription && (
-                    <div className="bg-white rounded-2xl border border-neutral-100 p-6 shadow-sm">
+                    <div className={cn(
+                        "bg-white rounded-2xl border p-6 shadow-sm transition-all",
+                        showSuccess && subscription.status === "active"
+                            ? "border-green-200 shadow-green-50"
+                            : "border-neutral-100"
+                    )}>
                         <div className="flex items-start justify-between mb-5">
                             <div>
-                                <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2">
+                                <p className="text-xs font-bold text-neutral-400 uppercase tracking-widests mb-2">
                                     Current Plan
                                 </p>
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -262,13 +330,13 @@ export default function BillingPage() {
                                 { label: "Expires", value: formatTime(subscription.expiresAt) },
                             ].map(s => (
                                 <div key={s.label} className="bg-neutral-50 rounded-xl p-3">
-                                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{s.label}</p>
+                                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widests mb-1">{s.label}</p>
                                     <p className="text-xs font-bold text-neutral-800 capitalize">{s.value}</p>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Auto renew toggle — only for paid subscriptions */}
+                        {/* Auto renew toggle */}
                         {subscription.status === "active" && subscription.source === "payment" && (
                             <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
                                 <div className="flex items-center gap-2">
@@ -314,9 +382,9 @@ export default function BillingPage() {
                     </div>
                 )}
 
-                {/* Pricing Cards - Always Visible */}
+                {/* Pricing Cards */}
                 <div>
-                    <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-4">
+                    <p className="text-xs font-bold text-neutral-400 uppercase tracking-widests mb-4">
                         Available Plans
                     </p>
                     <div className="grid grid-cols-3 gap-4">
@@ -338,26 +406,23 @@ export default function BillingPage() {
                                             {plan.badge}
                                         </div>
                                     )}
-
                                     <p className="text-sm font-black text-neutral-900 mb-1">{plan.label}</p>
                                     <div className="mb-4">
                                         <span className="text-2xl font-black text-neutral-900">{plan.price}</span>
                                         <span className="text-xs text-neutral-400 ml-1">{plan.period}</span>
                                     </div>
-
                                     <ul className="space-y-1.5 mb-5">
                                         {plan.features.map(f => (
                                             <li key={f} className="text-xs text-neutral-600">{f}</li>
                                         ))}
                                     </ul>
-
                                     {plan.key === "trial" ? (
                                         <div className="w-full py-2.5 rounded-xl bg-neutral-100 text-neutral-400 text-xs font-bold text-center">
                                             {isCurrent ? "Current Plan" : "Trial Only"}
                                         </div>
                                     ) : isCurrent && subscription?.status === "active" ? (
-                                        <div className="w-full py-2.5 rounded-xl bg-green-50 text-green-600 text-xs font-bold text-center border border-green-100">
-                                            ✓ Active
+                                        <div className="w-full py-2.5 rounded-xl bg-green-50 text-green-600 text-xs font-bold text-center border border-green-100 flex items-center justify-center gap-1.5">
+                                            <CheckCircle2 size={13} /> Active Plan
                                         </div>
                                     ) : (
                                         <button
@@ -384,6 +449,9 @@ export default function BillingPage() {
                     <div className="px-6 py-4 border-b border-neutral-100 flex items-center gap-2">
                         <DollarSign size={15} className="text-neutral-500" />
                         <h3 className="text-sm font-black text-neutral-800">Payment History</h3>
+                        {payments && payments.length > 0 && (
+                            <span className="ml-auto text-xs text-neutral-400">{payments.length} records</span>
+                        )}
                     </div>
                     {!payments || payments.length === 0 ? (
                         <div className="text-center py-10 text-neutral-400">
@@ -395,13 +463,17 @@ export default function BillingPage() {
                             <thead>
                                 <tr className="bg-neutral-50 border-b border-neutral-100">
                                     {["Date", "Amount", "Method", "Status", "Transaction ID"].map(h => (
-                                        <th key={h} className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-5 py-3">{h}</th>
+                                        <th key={h} className="text-left text-[11px] font-bold tracking-widests text-neutral-400 uppercase px-5 py-3">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {payments.map(p => (
-                                    <tr key={p._id} className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors">
+                                    <tr key={p._id} className={cn(
+                                        "border-b border-neutral-50 hover:bg-neutral-50 transition-colors",
+                                        // ← Highlight newest payment on success
+                                        showSuccess && p === payments[0] ? "bg-green-50" : ""
+                                    )}>
                                         <td className="px-5 py-3 text-sm text-neutral-600">{formatTime(p.createdAt)}</td>
                                         <td className="px-5 py-3 text-sm font-black text-neutral-800">{p.amount} {p.currency}</td>
                                         <td className="px-5 py-3 text-sm text-neutral-500 capitalize">{p.method ?? "Card"}</td>
@@ -433,8 +505,11 @@ export default function BillingPage() {
                         <div className="text-center py-8 text-neutral-400 text-sm">No activity yet</div>
                     ) : (
                         <div className="divide-y divide-neutral-50">
-                            {logs.slice(0, 10).map(log => (
-                                <div key={log._id} className="flex items-start gap-3 px-5 py-3">
+                            {logs.slice(0, 10).map((log, i) => (
+                                <div key={log._id} className={cn(
+                                    "flex items-start gap-3 px-5 py-3",
+                                    showSuccess && i === 0 ? "bg-green-50" : ""
+                                )}>
                                     <div className={cn(
                                         "w-2 h-2 rounded-full mt-1.5 shrink-0",
                                         log.type === "success" ? "bg-green-500" :
@@ -454,5 +529,19 @@ export default function BillingPage() {
 
             </div>
         </div>
+    );
+}
+
+export default function Page() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
+                    <span className="text-white font-black text-sm">S</span>
+                </div>
+            </div>
+        }>
+            <BillingPage />
+        </Suspense>
     );
 }
