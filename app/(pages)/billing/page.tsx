@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,6 +14,44 @@ import {
     FileText, Shield, Gift, Star, Tag,
     Crown, Sparkles, PartyPopper,
 } from "lucide-react";
+
+// ← Error boundary for authentication errors
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error) {
+        console.error("BillingPage error:", error);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
+                    <div className="text-center">
+                        <XCircle size={48} className="mx-auto mb-3 text-red-500" />
+                        <h2 className="text-lg font-bold text-neutral-900 mb-1">Something went wrong</h2>
+                        <p className="text-sm text-neutral-500 mb-4">Please try refreshing the page</p>
+                        <button 
+                            onClick={() => window.location.reload()}
+                            className="px-4 py-2 bg-neutral-900 text-white rounded-xl text-sm font-bold hover:bg-neutral-800 transition-colors"
+                        >
+                            Refresh Page
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
 
 const SOURCE_CONFIG = {
     payment: { label: "Paid",          icon: DollarSign, cls: "bg-green-100 text-green-700" },
@@ -126,7 +164,7 @@ function PaymentSuccessBanner({
 }
 
 export  function BillingPage() {
-    const { user } = useUser();
+    const { user, isLoaded } = useUser();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -139,6 +177,7 @@ export  function BillingPage() {
     const [loading, setLoading]         = useState(false);
 
     const { subscription, isTrialing, daysLeft, planLabel, isExpired, sourceLabel } = useSubscription();
+    // ← Queries are safe to call here because we return early if !isLoaded
     const payments    = useQuery(api.subscriptions.getBillingPayments);
     const logs        = useQuery(api.subscriptions.getBillingLogs);
     const currentUser = useQuery(api.users.getCurrentUser);
@@ -211,6 +250,20 @@ export  function BillingPage() {
         new Date(ts).toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" });
     const formatTime = (ts: number) =>
         new Date(ts).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" });
+
+    // ← Show loading state while authentication is being set up
+    if (!isLoaded) {
+        return (
+            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
+                        <span className="text-white font-black text-sm">S</span>
+                    </div>
+                    <p className="text-sm text-neutral-500 font-semibold">Loading your billing information...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#F7F8FA]" style={{ fontFamily: "'DM Sans','Inter',sans-serif" }}>
@@ -534,14 +587,16 @@ export  function BillingPage() {
 
 export default function Page() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
-                <div className="w-8 h-8 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
-                    <span className="text-white font-black text-sm">S</span>
+        <ErrorBoundary>
+            <Suspense fallback={
+                <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
+                        <span className="text-white font-black text-sm">S</span>
+                    </div>
                 </div>
-            </div>
-        }>
-            <BillingPage />
-        </Suspense>
+            }>
+                <BillingPage />
+            </Suspense>
+        </ErrorBoundary>
     );
 }
