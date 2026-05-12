@@ -53,18 +53,17 @@ export async function POST(req: NextRequest) {
         }
 
         // ← Parse restaurantId and plan from merchant_order_id
-        // Format: restaurantId-plan-timestamp (e.g. "abc123-monthly-1716000000000")
+        // Format: restaurantId|plan|timestamp (e.g. "v:j98n2k3jnk123|monthly|1716000000000")
         const merchantOrderId = obj.order?.merchant_order_id ?? "";
-        const parts = merchantOrderId.split("-");
+        const parts = merchantOrderId.split("|");
 
-        if (parts.length < 2) {
-            console.error("[webhook] Invalid merchant_order_id:", merchantOrderId);
+        if (parts.length !== 3) {
+            console.error("[webhook] Invalid merchant_order_id format:", merchantOrderId);
             return NextResponse.json({ error: "Invalid metadata" }, { status: 400 });
         }
 
-        // restaurantId is everything before the last two segments (plan + timestamp)
-        const plan         = parts[parts.length - 2] as "monthly" | "yearly";
-        const restaurantId = parts.slice(0, parts.length - 2).join("-");
+        const restaurantId = parts[0];
+        const plan         = parts[1] as "monthly" | "yearly";
 
         if (!restaurantId || !["monthly", "yearly"].includes(plan)) {
             console.error("[webhook] Invalid plan or restaurantId:", { restaurantId, plan });
@@ -75,6 +74,8 @@ export async function POST(req: NextRequest) {
         const transactionId   = String(obj.id);
         const paymobOrderId   = String(obj.order.id);
         const paymentMethod   = obj.source_data?.type ?? "card";
+
+        console.log("[webhook] Processing payment:", { restaurantId, plan, amount, transactionId });
 
         // Prevent duplicate processing
         const existing = await convex.query(
@@ -88,16 +89,21 @@ export async function POST(req: NextRequest) {
         }
 
         // Activate subscription
-        await convex.mutation(api.subscriptions.activateSubscription, {
-            restaurantId: restaurantId as any,
-            plan,
-            paymobOrderId,
-            paymobTransactionId: transactionId,
-            amount,
-        });
+        try {
+            await convex.mutation(api.subscriptions.activateSubscription, {
+                restaurantId: restaurantId as any,
+                plan,
+                paymobOrderId,
+                paymobTransactionId: transactionId,
+                amount,
+            });
 
-        console.log("[webhook] Subscription activated:", { restaurantId, plan, amount });
-        return NextResponse.json({ received: true, success: true });
+            console.log("[webhook] ✅ Subscription activated successfully:", { restaurantId, plan, amount });
+            return NextResponse.json({ received: true, success: true });
+        } catch (err) {
+            console.error("[webhook] ❌ Failed to activate subscription:", err);
+            throw err;
+        }
 
     } catch (err) {
         console.error("[webhook] Error:", err);

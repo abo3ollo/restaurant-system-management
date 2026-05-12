@@ -200,6 +200,13 @@ export  function BillingPage() {
             toast.success("🎉 Payment successful! Your subscription is now active.", {
                 duration: 6000,
             });
+            
+            // ← Force refresh queries after webhook has processed (2-3 second delay)
+            const timer = setTimeout(() => {
+                window.location.reload();
+            }, 2500);
+            
+            return () => clearTimeout(timer);
         }
     }, []);
 

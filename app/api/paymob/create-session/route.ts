@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
 
         // Step 2 — Create order
         // ← merchant_order_id encodes restaurantId + plan for webhook
+        // Using pipe delimiter to avoid conflicts with Convex ID format
         const orderRes = await fetch("https://accept.paymob.com/api/ecommerce/orders", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
                 delivery_needed: false,
                 amount_cents: amount,
                 currency: "EGP",
-                merchant_order_id: `${restaurantId}-${plan}-${Date.now()}`,
+                merchant_order_id: `${restaurantId}|${plan}|${Date.now()}`,
                 items: [{
                     name: `Servix ${planLabel}`,
                     amount_cents: amount,
