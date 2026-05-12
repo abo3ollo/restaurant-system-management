@@ -164,7 +164,7 @@ function PaymentSuccessBanner({
 }
 
 export  function BillingPage() {
-    const { user, isLoaded } = useUser();
+    const { user } = useUser();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -250,20 +250,6 @@ export  function BillingPage() {
         new Date(ts).toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric" });
     const formatTime = (ts: number) =>
         new Date(ts).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" });
-
-    // ← Show loading state while authentication is being set up
-    if (!isLoaded) {
-        return (
-            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
-                        <span className="text-white font-black text-sm">S</span>
-                    </div>
-                    <p className="text-sm text-neutral-500 font-semibold">Loading your billing information...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-[#F7F8FA]" style={{ fontFamily: "'DM Sans','Inter',sans-serif" }}>
@@ -587,16 +573,38 @@ export  function BillingPage() {
 
 export default function Page() {
     return (
-        <ErrorBoundary>
-            <Suspense fallback={
-                <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
+                    <span className="text-white font-black text-sm">S</span>
+                </div>
+            </div>
+        }>
+            <AuthGuard />
+        </Suspense>
+    );
+}
+
+// ← Auth guard wrapper that prevents rendering BillingPage until Clerk is ready
+function AuthGuard() {
+    const { isLoaded } = useUser();
+
+    if (!isLoaded) {
+        return (
+            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-neutral-900 flex items-center justify-center animate-pulse">
                         <span className="text-white font-black text-sm">S</span>
                     </div>
+                    <p className="text-sm text-neutral-500 font-semibold">Loading your billing information...</p>
                 </div>
-            }>
-                <BillingPage />
-            </Suspense>
+            </div>
+        );
+    }
+
+    return (
+        <ErrorBoundary>
+            <BillingPage />
         </ErrorBoundary>
     );
 }
