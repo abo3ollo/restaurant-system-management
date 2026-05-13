@@ -59,10 +59,11 @@ export const createInvitation = mutation({
             expiresAt,
         });
 
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         return {
             invitationId,
             token,
-            inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/join?token=${token}`,
+            inviteUrl: `${appUrl}/join?token=${token}`,
             restaurantName: restaurant.name,
         };
     },
@@ -185,9 +186,10 @@ export const resendInvitation = mutation({
 
         const invitation = await ctx.db.get(args.id);
 
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         return {
             token,
-            inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/join?token=${token}`,
+            inviteUrl: `${appUrl}/join?token=${token}`,
             restaurantName: restaurant.name,
             email: invitation?.email,
         };
