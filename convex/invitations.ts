@@ -10,6 +10,8 @@ function generateToken(): string {
     ).join("");
 }
 
+// convex/invitations.ts
+
 // ── Create invitation ──────────────────────────────────
 export const createInvitation = mutation({
     args: {
@@ -59,11 +61,19 @@ export const createInvitation = mutation({
             expiresAt,
         });
 
-        const appUrl = process.env.APP_URL || "http://localhost:3000";
+        // Use APP_URL from Convex environment variables
+        const appUrl = process.env.APP_URL || "https://restaurant-system-management-lake.vercel.app";
+        
+        // Remove any trailing slash
+        const cleanUrl = appUrl.replace(/\/$/, '');
+        const inviteUrl = `${cleanUrl}/join?token=${token}`;
+        
+        console.log("Generated invite URL:", inviteUrl); // For debugging
+
         return {
             invitationId,
             token,
-            inviteUrl: `${appUrl}/join?token=${token}`,
+            inviteUrl,
             restaurantName: restaurant.name,
         };
     },
