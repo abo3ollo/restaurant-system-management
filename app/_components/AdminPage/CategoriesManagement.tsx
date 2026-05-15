@@ -120,7 +120,7 @@ export default function CategoriesManagement() {
                         </button>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-col [@media(min-width:740px)]:flex-row" >
                         <input
                             value={name}
                             onChange={e => setName(e.target.value)}
@@ -159,7 +159,7 @@ export default function CategoriesManagement() {
                     <p className="text-xs text-neutral-300 mt-1">Click "Add Category" to get started</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {categories.map((cat, idx) => {
                         const itemCount = itemCountMap.get(cat._id) ?? 0;
                         const colorClass = COLORS[idx % COLORS.length];

@@ -1,7 +1,9 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, use } from "react";
 import { getCurrencySymbol } from "@/lib/currency";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 type ReceiptItem = {
     name: string;
@@ -57,6 +59,9 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
     };
 
     const currencySymbol = getCurrencySymbol(currency);
+    const resturant = useQuery(api.restaurants.getMyRestaurant);
+    console.log(resturant);
+    
 
     return (
         <div
@@ -73,7 +78,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
         >
             {/* Header */}
             <div style={{ textAlign: "center", marginBottom: "8px" }}>
-                <p style={{ fontSize: "18px", fontWeight: "bold", margin: 0 }}>FOODICS CAFE</p>
+                <p style={{ fontSize: "18px", fontWeight: "bold", margin: 0 }}>{resturant?.name || "RESTAURANT"}</p>
                 <p style={{ fontSize: "11px", color: "#555", margin: "2px 0 0" }}>
                     Restaurant POS System
                 </p>
@@ -160,7 +165,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
             <div style={{ textAlign: "center", marginTop: "8px" }}>
                 <p style={{ margin: 0, fontSize: "13px" }}>Thank you ❤️</p>
                 <p style={{ margin: "4px 0 0", fontSize: "10px", color: "#888" }}>
-                    Powered by Foodics POS
+                    Powered by Servix POS
                 </p>
             </div>
         </div>

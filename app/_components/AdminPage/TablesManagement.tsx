@@ -126,7 +126,7 @@ export default function TablesManagement() {
             </div>
 
             {/* ── Stats ── */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     { label: "Available", count: available, color: "bg-green-50 border-green-100", textColor: "text-green-600", dot: "bg-green-500" },
                     { label: "Occupied",  count: occupied,  color: "bg-red-50 border-red-100",   textColor: "text-red-600",   dot: "bg-red-500" },
@@ -234,7 +234,7 @@ export default function TablesManagement() {
                     <p className="text-xs text-neutral-300 mt-1">Click "Add Table" to get started</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {tables.map(table => {
                         const config = STATUS_CONFIG[table.status as TableStatus] ?? STATUS_CONFIG.available;
                         return (

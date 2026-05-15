@@ -134,7 +134,7 @@ export default function ShiftsReport() {
       </div>
 
       {/* ── Summary Cards ── */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-neutral-100 p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold tracking-widests text-neutral-400 uppercase">
@@ -250,7 +250,7 @@ export default function ShiftsReport() {
       </div>
 
       {/* ── Shifts Table ── */}
-      <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-neutral-100 overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-neutral-100 bg-neutral-50">
@@ -339,7 +339,7 @@ export default function ShiftsReport() {
                       </td>
 
                       {/* Time */}
-                      <td className="px-4 py-4">
+                      <td className="px-6 py-4">
                         <span className="text-sm text-neutral-600">
                           {formatTime(shift.startTime)}
                           {shift.endTime && ` → ${formatTime(shift.endTime)}`}

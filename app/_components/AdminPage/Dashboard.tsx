@@ -81,9 +81,9 @@ export default function Dashboard() {
     const maxRevenue = Math.max(...stats.topItems.map(i => i.revenue), 1);
 
     return (
-        <>
+        <div className="space-y-6">
             {/* ── STATS ── */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {STATS.map((s) => {
                     const Icon = s.icon;
                     return (
@@ -106,9 +106,9 @@ export default function Dashboard() {
                 })}
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* ── RECENT ORDERS ── */}
-                <div className="col-span-2 bg-white rounded-2xl border border-neutral-100 p-6">
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-neutral-100 p-6">
                     <div className="flex items-center justify-between mb-5">
                         <h3 className="text-sm font-black text-neutral-800 uppercase tracking-wide">
                             Recent Orders
@@ -123,35 +123,37 @@ export default function Dashboard() {
                             <p className="text-sm">No orders yet</p>
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-2">
-                            {stats.recentOrders.map((o, idx) => (
-                                <div
-                                    key={o._id}
-                                    className="flex items-center gap-4 py-2.5 border-b border-neutral-50 last:border-0"
-                                >
-                                    <span className="text-xs font-black text-neutral-400 w-12">
-                                        #{String(idx + 1).padStart(4, "0")}
-                                    </span>
-                                    <span className="text-sm font-bold text-neutral-700 flex-1">
-                                        {o.tableName}
-                                    </span>
-                                    <span className="text-xs text-neutral-400">
-                                        {o.itemCount} items
-                                    </span>
-                                    <span className="text-sm font-black text-neutral-800 w-16 text-right">
-                                        {currencySymbol}{o.total.toFixed(2)}
-                                    </span>
-                                    <span className={cn(
-                                        "text-[10px] font-bold tracking-wide px-2 py-1 rounded-lg uppercase",
-                                        STATUS_STYLE[o.status] ?? "bg-neutral-100 text-neutral-500"
-                                    )}>
-                                        {o.status}
-                                    </span>
-                                    <span className="text-[11px] text-neutral-400 w-14 text-right">
-                                        {timeAgo(o.createdAt)}
-                                    </span>
-                                </div>
-                            ))}
+                        <div className="overflow-x-auto">
+                            <div className="min-w-150">
+                                {stats.recentOrders.map((o, idx) => (
+                                    <div
+                                        key={o._id}
+                                        className="flex items-center gap-3 py-3 border-b border-neutral-50 last:border-0"
+                                    >
+                                        <span className="text-xs font-black text-neutral-400 w-12 shrink-0">
+                                            #{String(idx + 1).padStart(4, "0")}
+                                        </span>
+                                        <span className="text-sm font-bold text-neutral-700 flex-1 min-w-0 truncate">
+                                            {o.tableName}
+                                        </span>
+                                        <span className="text-xs text-neutral-400 shrink-0 whitespace-nowrap">
+                                            {o.itemCount} items
+                                        </span>
+                                        <span className="text-sm font-black text-neutral-800 w-20 text-right shrink-0">
+                                            {currencySymbol}{o.total.toFixed(2)}
+                                        </span>
+                                        <span className={cn(
+                                            "text-[10px] font-bold tracking-wide px-2 py-1 rounded-lg uppercase shrink-0 whitespace-nowrap",
+                                            STATUS_STYLE[o.status] ?? "bg-neutral-100 text-neutral-500"
+                                        )}>
+                                            {o.status}
+                                        </span>
+                                        <span className="text-[11px] text-neutral-400 w-16 text-right shrink-0 whitespace-nowrap">
+                                            {timeAgo(o.createdAt)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -168,19 +170,19 @@ export default function Dashboard() {
                             <p className="text-xs">No data yet</p>
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-4">
+                        <div className="space-y-4">
                             {stats.topItems.map((item, i) => (
                                 <div key={item.name}>
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-black text-neutral-300 w-4">
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <span className="text-xs font-black text-neutral-300 w-4 shrink-0">
                                                 {i + 1}
                                             </span>
-                                            <span className="text-xs font-bold text-neutral-700 truncate max-w-32">
+                                            <span className="text-xs font-bold text-neutral-700 truncate">
                                                 {item.name}
                                             </span>
                                         </div>
-                                        <span className="text-xs font-black text-neutral-800">
+                                        <span className="text-xs font-black text-neutral-800 shrink-0 ml-2">
                                             {currencySymbol}{item.revenue.toFixed(0)}
                                         </span>
                                     </div>
@@ -203,21 +205,23 @@ export default function Dashboard() {
                         <p className="text-xs font-black text-neutral-400 uppercase tracking-widest mb-3">
                             Quick Actions
                         </p>
-                        {[
-                            { label: "Add Menu Item", nav: "Menu" },
-                            { label: "Manage Tables", nav: "Tables" },
-                            { label: "Export Report", nav: "Reports" },
-                        ].map(({ label }) => (
-                            <button
-                                key={label}
-                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-indigo-50 text-xs font-bold text-neutral-600 hover:text-indigo-700 transition-all mb-1"
-                            >
-                                {label} <ArrowUpRight size={12} />
-                            </button>
-                        ))}
+                        <div className="space-y-1">
+                            {[
+                                { label: "Add Menu Item", nav: "Menu" },
+                                { label: "Manage Tables", nav: "Tables" },
+                                { label: "Export Report", nav: "Reports" },
+                            ].map(({ label }) => (
+                                <button
+                                    key={label}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-indigo-50 text-xs font-bold text-neutral-600 hover:text-indigo-700 transition-all"
+                                >
+                                    {label} <ArrowUpRight size={12} />
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

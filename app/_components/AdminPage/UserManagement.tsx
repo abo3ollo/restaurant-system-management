@@ -246,7 +246,7 @@ export default function UserManagement() {
 
             {/* ── Staff Tab ── */}
             {activeTab === "staff" && (
-                <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
+                <div className="bg-white rounded-2xl border border-neutral-100 overflow-x-auto">
                     {!users ? (
                         <div className="flex items-center justify-center h-32 text-neutral-400">
                             <Loader2 size={20} className="animate-spin" />
@@ -317,7 +317,7 @@ export default function UserManagement() {
 
             {/* ── Invitations Tab ── */}
             {activeTab === "invitations" && (
-                <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
+                <div className="bg-white rounded-2xl border border-neutral-100 overflow-x-auto">
                     {!invitations ? (
                         <div className="flex items-center justify-center h-32 text-neutral-400">
                             <Loader2 size={20} className="animate-spin" />
@@ -383,7 +383,7 @@ export default function UserManagement() {
                                                     {inv.status === "pending" && !isExpired && (
                                                         <button
                                                             onClick={() => handleCopy(inviteUrl, inv.token)}
-                                                            className="flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                                                            className="flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1.5 rounded-lg transition-colors"
                                                         >
                                                             {copiedToken === inv.token ? (
                                                                 <><Check size={10} /> Copied</>

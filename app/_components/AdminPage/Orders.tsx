@@ -1,4 +1,3 @@
-// app/_components/AdminPage/Orders.tsx
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
@@ -19,10 +18,41 @@ const STATUS_CONFIG = {
 
 const STATUS_FLOW = ["pending", "confirmed", "preparing", "served", "paid"] as const;
 
+// Format time function
+function formatTimeAgo(timestamp: number): string {
+    const now = Date.now();
+    const diffInSeconds = Math.floor((now - timestamp) / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    const diffInMonths = Math.floor(diffInDays / 30);
+    const diffInYears = Math.floor(diffInDays / 365);
+
+    if (diffInYears >= 1) {
+        return `${diffInYears} year${diffInYears > 1 ? 's' : ''} ago`;
+    }
+    if (diffInMonths >= 1) {
+        return `${diffInMonths} month${diffInMonths > 1 ? 's' : ''} ago`;
+    }
+    if (diffInWeeks >= 1) {
+        return `${diffInWeeks} week${diffInWeeks > 1 ? 's' : ''} ago`;
+    }
+    if (diffInDays >= 1) {
+        return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    }
+    if (diffInHours >= 1) {
+        return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    }
+    if (diffInMinutes >= 1) {
+        return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    }
+    return "Just now";
+}
+
 export default function Orders() {
     const orders = useQuery(api.orders.getOrders);
     const restaurant = useQuery(api.restaurants.getMyRestaurant);
-    console.log(orders);
     
     const updateStatus = useMutation(api.orders.updateOrderStatus);
 
@@ -54,7 +84,7 @@ export default function Orders() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {STATUS_FLOW.map((status) => {
                     const count = orders.filter(o => o.status === status).length;
                     const config = STATUS_CONFIG[status];
@@ -74,8 +104,8 @@ export default function Orders() {
             </div>
 
             {/* Orders Table */}
-            <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
-                <table className="w-full">
+            <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden overflow-x-auto">
+                <table className="w-full min-w-200">
                     <thead>
                         <tr className="border-b border-neutral-100">
                             <th className="text-left text-[11px] font-bold tracking-widest text-neutral-400 uppercase px-6 py-4">Order</th>
@@ -94,7 +124,7 @@ export default function Orders() {
                             const config = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG];
                             const Icon = config.icon;
                             const nextStatus = getNextStatus(order.status);
-                            const timeAgo = Math.floor((Date.now() - order.createdAt) / 60000);
+                            const timeAgo = formatTimeAgo(order.createdAt);
 
                             return (
                                 <tr key={order._id} className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors">
@@ -115,7 +145,7 @@ export default function Orders() {
                                     {/* Items */}
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col gap-0.5">
-                                            {order.items.map((item) => (
+                                            {order.items.map((item: any) => (
                                                 <p key={item._id} className="text-xs text-neutral-500">
                                                     {item.quantity}x {item.menuItemName}
                                                     {item.note && (
@@ -128,9 +158,9 @@ export default function Orders() {
                                         </div>
                                     </td>
 
-                                    {/* Total */}
+                                    {/* Cashier */}
                                     <td className="px-6 py-4">
-                                        <span className="text-sm font-bold text-neutral-500 ">
+                                        <span className="text-sm font-bold text-neutral-500">
                                             {order.cashierName}
                                         </span>
                                     </td>
@@ -147,9 +177,11 @@ export default function Orders() {
                                         </span>
                                     </td>
 
-                                    {/* Paymnt Method */}
+                                    {/* Payment Method */}
                                     <td className="px-6 py-4">
-                                        <span className="text-sm font-bold text-neutral-500 ms-8 ">
+                                        <span className="inline-flex items-center gap-1 text-sm font-bold text-neutral-500">
+                                            {order.paymentMethod === "card"}
+                                            {order.paymentMethod === "cash"}
                                             {order.paymentMethod}
                                         </span>
                                     </td>
@@ -167,8 +199,8 @@ export default function Orders() {
 
                                     {/* Time */}
                                     <td className="px-6 py-4">
-                                        <span className="text-xs text-neutral-400">
-                                            {timeAgo === 0 ? "Just now" : `${timeAgo}m ago`}
+                                        <span className="text-xs text-neutral-400 whitespace-nowrap">
+                                            {timeAgo}
                                         </span>
                                     </td>
 
@@ -180,18 +212,18 @@ export default function Orders() {
                                                     orderId: order._id as Id<"orders">,
                                                     status: nextStatus,
                                                 })}
-                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                                             >
                                                 → Mark {STATUS_CONFIG[nextStatus].label}
                                             </button>
                                         )}
                                         {!nextStatus && (
-                                            <span className="text-xs text-neutral-300 font-semibold">
+                                            <span className="text-xs text-neutral-300 font-semibold whitespace-nowrap">
                                                 Completed
                                             </span>
                                         )}
-                                    </td>
-                                </tr>
+                                     </td>
+                                 </tr>
                             );
                         })}
                     </tbody>
