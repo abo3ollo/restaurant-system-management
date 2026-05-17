@@ -491,7 +491,7 @@ export  function BillingPage() {
                 </div>
 
                 {/* Payment History */}
-                <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden shadow-sm">
+                {/* <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden shadow-sm">
                     <div className="px-6 py-4 border-b border-neutral-100 flex items-center gap-2">
                         <DollarSign size={15} className="text-neutral-500" />
                         <h3 className="text-sm font-black text-neutral-800">Payment History</h3>
@@ -539,7 +539,7 @@ export  function BillingPage() {
                             </tbody>
                         </table>
                     )}
-                </div>
+                </div> */}
 
                 {/* Billing Logs */}
                 <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden shadow-sm">

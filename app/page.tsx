@@ -14,6 +14,7 @@ import {
     Loader2, Store, CheckCircle,
 } from "lucide-react";
 import POSMockup from "./_components/POSMockup";
+import Link from "next/link";
 
 // ── Types ──
 type PlanKey = "trial" | "monthly" | "yearly";
@@ -29,10 +30,10 @@ const CURRENCY_CONFIG: Record<Currency, {
     monthlyOld: number;
     yearlyOld: number;
 }> = {
-    EGP: { symbol: "EGP", label: "EGP (ج.م)", monthly: 800, yearly: 14400, monthlyOld: 1500, yearlyOld: 18000 },
-    USD: { symbol: "$", label: "USD ($)", monthly: 16, yearly: 288, monthlyOld: 30, yearlyOld: 360 },
-    SAR: { symbol: "SAR", label: "SAR (ر.س)", monthly: 60, yearly: 1080, monthlyOld: 112, yearlyOld: 1350 },
-    AED: { symbol: "AED", label: "AED (د.إ)", monthly: 59, yearly: 1060, monthlyOld: 110, yearlyOld: 1325 },
+    EGP: { symbol: "EGP", label: "EGP (ج.م)", monthly: 1000, yearly: 14000, monthlyOld: 1300, yearlyOld: 15600 },
+    USD: { symbol: "$", label: "USD ($)", monthly: 20, yearly: 265, monthlyOld: 26, yearlyOld: 312 },
+    SAR: { symbol: "SAR", label: "SAR (ر.س)", monthly: 75, yearly: 1000, monthlyOld: 98, yearlyOld: 1170 },
+    AED: { symbol: "AED", label: "AED (د.إ)", monthly: 73, yearly: 970, monthlyOld: 95, yearlyOld: 1140 },
 };
 
 // ── Translations ──
@@ -227,7 +228,7 @@ export default function ServixLanding() {
     };
 
     const formatPrice = (n: number) => {
-        if (Number.isInteger(n)) return n.toLocaleString();
+        if (Number.isInteger(n)) return n.toLocaleString('en-US');
         return n.toFixed(0);
     };
 
@@ -516,6 +517,17 @@ export default function ServixLanding() {
                                     </button>
                                 </div>
                             </div>
+                            <h2 className="text-center text-sm leading-6 text-neutral-500 mt-4 max-w-md mx-auto">
+                                Once you choose the plan that best fits your restaurant, please contact our team via WhatsApp to complete your subscription activation and setup.
+
+                                <Link
+                                    className="block text-lg mt-2 font-bold text-neutral-900 hover:underline"
+                                    target="_blank"
+                                    href="https://wa.me/201555743737"
+                                >
+                                    +20 155 574 3737
+                                </Link>
+                            </h2>
                         </div>
                     </div>
                 </div>
