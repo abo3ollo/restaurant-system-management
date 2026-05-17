@@ -53,6 +53,8 @@ function NewOrder() {
         floorNumber: "",
         apartment: "",
     });
+    // NEW: Track selected order for Pay Now button
+    const [selectedOrderId, setSelectedOrderId] = useState<Id<"orders"> | null>(null);
 
     const data = useQuery(api.menuItems.getMenu);
     const tables = useQuery(api.tables.getTables);
@@ -147,8 +149,7 @@ function NewOrder() {
         ? data?.items?.filter(i => i.available)
         : data?.items?.filter(i =>
             i.available && (
-                i.categoryId === activeCategory           // new items with proper ID
-                // i.category === selectedCategoryName          // old items with string category
+                i.categoryId === activeCategory
             )
         );
 
@@ -165,7 +166,13 @@ function NewOrder() {
         ? allOrders
         : allOrders?.filter((o) => o.userId === currentUser?._id);
 
-    const activeTableOrders = orders?.filter((o) => {
+    // FIX 1: Sort orders by creation date (oldest first)
+    const sortedOrders = [...(orders || [])].sort((a, b) => {
+        // Sort by creation time - oldest first gets #0001
+        return new Date(a._creationTime).getTime() - new Date(b._creationTime).getTime();
+    });
+
+    const activeTableOrders = sortedOrders?.filter((o) => {
         if (o.status === "paid") return false;
         if (orderType === "dine_in") {
             return o.tableId === activeTable;
@@ -173,6 +180,20 @@ function NewOrder() {
             return o.orderType === orderType;
         }
     }) ?? [];
+
+    // FIX 2: Get the selected order or fallback to first unpaid order
+    const getPayableOrder = () => {
+        if (selectedOrderId) {
+            const selectedOrder = activeTableOrders.find(o => o._id === selectedOrderId);
+            if (selectedOrder && selectedOrder.status !== "paid") {
+                return selectedOrder;
+            }
+        }
+        // Fallback to first unpaid order
+        return activeTableOrders.find((o) => o.status !== "paid");
+    };
+
+    const payableOrder = getPayableOrder();
 
     const ORDER_TYPES = [
         {
@@ -201,17 +222,14 @@ function NewOrder() {
         },
     ];
 
-    const payableOrder = activeTableOrders.find((o) => o.status !== "paid");
-
     return (
         <>
             {/* ── TABLES PANEL ── */}
             <div className={cn(
-                "w-60 shrink-0 bg-white border-l border-neutral-100 flex flex-col pt-5",
+                "w-45 shrink-0 bg-white border-l border-neutral-100 flex flex-col pt-5",
                 orderType !== "dine_in" && "hidden"
             )}>
-                {/* ... existing tables list ... */}
-                <div className="w-60 shrink-0 bg-white border-l border-neutral-100 flex flex-col pt-5">
+                <div className="w-40 shrink-0 bg-white border-neutral-100 flex flex-col pt-5 mx-1">
                     {activeTab === "new-order" && (
                         <>
                             <p className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-3 px-1">
@@ -258,6 +276,7 @@ function NewOrder() {
                                 key={t.key}
                                 onClick={() => {
                                     setOrderType(t.key as any);
+                                    setSelectedOrderId(null); // Reset selected order when changing type
                                     if (t.key === "delivery") {
                                         setDeliveryFormOpen(true);
                                     }
@@ -320,12 +339,15 @@ function NewOrder() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredItems?.map((item) => (
                             <div
                                 key={item._id}
                                 onClick={() => {
-                                    if (!activeTable) return;
+                                    if (!activeTable) {
+                                        toast.error("Please select a table first");
+                                        return;
+                                    }
                                     addToCart(activeTable, {
                                         _id: item._id,
                                         name: item.name,
@@ -335,12 +357,21 @@ function NewOrder() {
                                 }}
                                 className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:border-amber-200 hover:shadow-md transition-all cursor-pointer group"
                             >
-                                <div className="relative h-32 overflow-hidden">
-                                    <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
+                                <div className="relative h-32 overflow-hidden bg-neutral-100">
+                                    {item.image && item.image.trim() !== "" ? (
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = "/placeholder-food.jpg";
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-neutral-200">
+                                            <TrendingUp size={20} className="text-neutral-400" />
+                                        </div>
+                                    )}
                                     <div className="absolute top-2 left-2 bg-neutral-900 text-white text-[9px] font-bold tracking-widest px-2 py-1 rounded-lg flex items-center gap-1">
                                         <TrendingUp size={9} />
                                         {categoryMap.get(item.categoryId)}
@@ -365,9 +396,9 @@ function NewOrder() {
             </div>
 
             {/* ── ORDER SUMMARY ── */}
-            <aside className="w-72 shrink-0 bg-white border-l border-neutral-100 flex flex-col">
+            <aside className="w-65 shrink-0 bg-white border-l border-neutral-100 flex flex-col">
                 {/* Header */}
-                <div className="px-5 pt-5 pb-3 border-b border-neutral-100 flex items-center justify-between">
+                <div className="px-5 pt-3 pb-3 border-b border-neutral-100 flex items-center justify-between">
                     <div>
                         <h2 className="text-sm font-black tracking-wide text-neutral-800 uppercase">
                             Order Summary
@@ -379,7 +410,7 @@ function NewOrder() {
                 </div>
 
                 {/* Table badge */}
-                <div className="mx-5 mt-4 flex items-center gap-3 bg-neutral-50 rounded-2xl p-3">
+                <div className="mx-5 mt-4 flex items-center gap-3 bg-neutral-50 rounded-2xl p-1.5">
                     <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
                         <ShoppingBasket size={16} className="text-amber-600" />
                     </div>
@@ -387,7 +418,7 @@ function NewOrder() {
                         <p className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider">
                             {orderType === "dine_in" ? "Current Table" : orderType === "takeaway" ? "Order Type" : "Delivery Info"}
                         </p>
-                        <p className="text-sm font-black text-neutral-800">
+                        <p className="text-sm font-black text-amber-600">
                             {orderType === "dine_in"
                                 ? currentTableName
                                 : orderType === "takeaway"
@@ -413,7 +444,7 @@ function NewOrder() {
                                     <div className="flex items-start justify-between gap-2">
                                         <p className="text-sm font-bold text-neutral-800">{item.name}</p>
                                         <span className="text-sm font-black text-neutral-700 shrink-0">
-                                            ${(item.price * item.quantity).toFixed(2)}
+                                            {currencySymbol}{(item.price * item.quantity).toFixed(2)}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -436,23 +467,35 @@ function NewOrder() {
                                 </div>
                             ))}
 
-                            {/* Active orders for this table */}
-                            {activeTableOrders.map((order, idx) => (
+                            {/* Active orders - FIXED: Use sorted orders with correct numbering */}
+                            {activeTableOrders.map((order, idx) => {
+                                // Get the actual order number based on global sort
+                                const orderNumber = sortedOrders.findIndex(o => o._id === order._id) + 1;
+                                
+                                return (
                                 <div
                                     key={order._id}
                                     className={cn(
-                                        "rounded-xl p-3 border transition-all",
+                                        "rounded-xl p-3 border transition-all cursor-pointer",
                                         editingOrderId === order._id
                                             ? "bg-indigo-50 border-indigo-200"
                                             : order.status === "served"
                                                 ? "bg-green-50 border-green-200"
-                                                : "bg-neutral-50 border-neutral-100",
+                                                : selectedOrderId === order._id
+                                                    ? "ring-2 ring-amber-400 bg-amber-50 border-amber-300" // Highlight selected order
+                                                    : "bg-neutral-50 border-neutral-100 hover:border-amber-200"
                                     )}
+                                    onClick={() => {
+                                        // Allow selecting any non-paid order
+                                        if (order.status !== "paid") {
+                                            setSelectedOrderId(order._id);
+                                        }
+                                    }}
                                 >
                                     {/* Order header */}
                                     <div className="flex items-center justify-between mb-2">
                                         <p className="text-xs font-black text-neutral-700">
-                                            Order #{String(idx + 1).padStart(4, "0")}
+                                            Order #{String(orderNumber).padStart(4, "0")}
                                         </p>
                                         <div className="flex items-center gap-1.5">
                                             <span className={cn(
@@ -470,14 +513,20 @@ function NewOrder() {
                                             {(order.status === "pending" || order.status === "confirmed") && (
                                                 editingOrderId === order._id ? (
                                                     <button
-                                                        onClick={handleCancelEdit}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCancelEdit();
+                                                        }}
                                                         className="text-[10px] font-bold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 px-2 py-0.5 rounded-lg transition-colors"
                                                     >
                                                         ✕
                                                     </button>
                                                 ) : (
                                                     <button
-                                                        onClick={() => handleEditOrder(order)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditOrder(order);
+                                                        }}
                                                         className="text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1"
                                                     >
                                                         <Pencil size={9} />
@@ -528,7 +577,10 @@ function NewOrder() {
                                         {/* Pay button for served orders */}
                                         {order.status === "served" && (
                                             <button
-                                                onClick={() => handleOpenPayment(order)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenPayment(order);
+                                                }}
                                                 className="flex items-center gap-1 text-[10px] font-bold text-white bg-green-500 hover:bg-green-600 px-2.5 py-1 rounded-lg transition-colors"
                                             >
                                                 <CreditCard size={10} />
@@ -537,13 +589,13 @@ function NewOrder() {
                                         )}
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </>
                     )}
                 </div>
 
                 {/* Totals */}
-                <div className="px-5 py-4 border-t border-neutral-100 space-y-2 shrink-0">
+                <div className="px-5 py-2 border-t border-neutral-100 space-y-2 shrink-0">
                     <div className="flex justify-between text-sm text-neutral-500">
                         <span>Subtotal</span>
                         <span>{getCurrencySymbol(restaurant?.currency)}{subtotal.toFixed(2)}</span>
@@ -614,7 +666,7 @@ function NewOrder() {
                             >
                                 <CreditCard size={15} className="mr-2" />
                                 {payableOrder
-                                    ? `Pay Now — ${getCurrencySymbol(restaurant?.currency)}${(() => {
+                                    ? `Pay ${selectedOrderId ? `Order #${String(sortedOrders.findIndex(o => o._id === payableOrder._id) + 1).padStart(4, "0")}` : ""} — ${getCurrencySymbol(restaurant?.currency)}${(() => {
                                         const taxRate = restaurant?.taxEnabled ? (restaurant?.taxRate ?? 0) : 0;
                                         const tax = +(payableOrder.total * (taxRate / 100)).toFixed(2);
                                         const discount = restaurant?.discountEnabled ? (restaurant?.discountAmount ?? 0) : 0;
@@ -623,6 +675,11 @@ function NewOrder() {
                                     : "Pay Now"
                                 }
                             </Button>
+                            {activeTableOrders.length > 1 && !selectedOrderId && (
+                                <p className="text-[10px] text-neutral-400 text-center mt-1">
+                                    Click on an order above to select it for payment
+                                </p>
+                            )}
                         </>
                     )}
                 </div>
@@ -636,11 +693,12 @@ function NewOrder() {
                     setPayingOrderId(null);
                     setPayingTotal(0);
                     setPayingOrder(null);
+                    setSelectedOrderId(null); // Reset selected order after payment
                 }}
                 total={payingTotal}
                 orderId={payingOrderId}
                 orderNumber={String(
-                    (orders?.findIndex(o => o._id === payingOrderId) ?? 0) + 1
+                    (sortedOrders?.findIndex(o => o._id === payingOrderId) ?? 0) + 1
                 ).padStart(4, "0")}
                 tableName={payingOrder?.tableName ?? ""}
                 cashierName={currentUser?.name ?? "Cashier"}
@@ -655,10 +713,7 @@ function NewOrder() {
                 taxEnabled={restaurant?.taxEnabled ?? false}
                 currency={restaurant?.currency} 
                 onSuccess={() => {
-                    // setPayingOrderId(null);
-                    // setPayingTotal(0);
-                    // setPayingOrder(null);
-                    // clearCart(activeTable ?? "");
+                    setSelectedOrderId(null);
                 }}
             />
 

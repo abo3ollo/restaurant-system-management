@@ -29,10 +29,10 @@ const CURRENCY_CONFIG: Record<Currency, {
     monthlyOld: number;
     yearlyOld: number;
 }> = {
-    EGP: { symbol: "EGP",  label: "EGP (ج.م)",  monthly: 800,    yearly: 14400,  monthlyOld: 1500,   yearlyOld: 18000 },
-    USD: { symbol: "$",    label: "USD ($)",    monthly: 16,     yearly: 288,    monthlyOld: 30,     yearlyOld: 360 },
-    SAR: { symbol: "SAR",  label: "SAR (ر.س)",  monthly: 60,     yearly: 1080,   monthlyOld: 112,    yearlyOld: 1350 },
-    AED: { symbol: "AED",  label: "AED (د.إ)",  monthly: 59,     yearly: 1060,   monthlyOld: 110,    yearlyOld: 1325 },
+    EGP: { symbol: "EGP", label: "EGP (ج.م)", monthly: 800, yearly: 14400, monthlyOld: 1500, yearlyOld: 18000 },
+    USD: { symbol: "$", label: "USD ($)", monthly: 16, yearly: 288, monthlyOld: 30, yearlyOld: 360 },
+    SAR: { symbol: "SAR", label: "SAR (ر.س)", monthly: 60, yearly: 1080, monthlyOld: 112, yearlyOld: 1350 },
+    AED: { symbol: "AED", label: "AED (د.إ)", monthly: 59, yearly: 1060, monthlyOld: 110, yearlyOld: 1325 },
 };
 
 // ── Translations ──
@@ -53,9 +53,9 @@ const T = {
             noCreditCard: "No credit card required • Setup in less than 5 minutes",
         },
         features: [
-            { label: "Smart Orders",       desc: "Real-time order management" },
-            { label: "Table Management",   desc: "Track and manage your tables" },
-            { label: "Easy Payments",      desc: "Cash, card, and receipts" },
+            { label: "Smart Orders", desc: "Real-time order management" },
+            { label: "Table Management", desc: "Track and manage your tables" },
+            { label: "Easy Payments", desc: "Cash, card, and receipts" },
             { label: "Reports & Analytics", desc: "Daily insights to grow your business" },
         ],
         demo: {
@@ -67,21 +67,21 @@ const T = {
             title: "Simple, Transparent Pricing",
             desc: "Choose the plan that works best for your restaurant",
             plans: {
-                trial:   { title: "Free Trial",    subtitle: "Try all features free for 7 days",    price: "7 Days", priceSub: "Free",    btn: "Start Free Trial" },
-                monthly: { title: "Monthly Plan",  subtitle: "Perfect for growing restaurants",      btn: "Get Started Monthly" },
-                yearly:  { title: "Yearly Plan",   subtitle: "Best value for your business",        btn: "Get Started Yearly",  badge: "Best Value" },
+                trial: { title: "Free Trial", subtitle: "Try all features free for 7 days", price: "7 Days", priceSub: "Free", btn: "Start Free Trial" },
+                monthly: { title: "Monthly Plan", subtitle: "Perfect for growing restaurants", btn: "Get Started Monthly" },
+                yearly: { title: "Yearly Plan", subtitle: "Best value for your business", btn: "Get Started Yearly", badge: "Best Value" },
             },
             features: {
-                trial:   ["All Features Included", "No Credit Card Required", "Cancel Anytime"],
+                trial: ["All Features Included", "No Credit Card Required", "Cancel Anytime"],
                 monthly: ["All Features Included", "Priority Support", "Regular Updates"],
-                yearly:  ["All Features Included", "Priority Support", "Save 20% off", "Regular Updates"],
+                yearly: ["All Features Included", "Priority Support", "Save 20% off", "Regular Updates"],
             },
             insteadOf: "instead of",
         },
         stats: [
-            { value: "500+",   label: "Restaurants Trust Us" },
-            { value: "99.9%",  label: "Uptime & Reliability" },
-            { value: "24/7",   label: "Customer Support" },
+            { value: "500+", label: "Restaurants Trust Us" },
+            { value: "99.9%", label: "Uptime & Reliability" },
+            { value: "24/7", label: "Customer Support" },
             { value: "Secure", label: "Your Data is Safe" },
         ],
         register: {
@@ -115,10 +115,10 @@ const T = {
             noCreditCard: "لا بطاقة ائتمانية مطلوبة • الإعداد في أقل من 5 دقائق",
         },
         features: [
-            { label: "طلبات ذكية",         desc: "إدارة الطلبات في الوقت الفعلي" },
-            { label: "إدارة الطاولات",     desc: "تتبع وإدارة طاولاتك" },
-            { label: "مدفوعات سهلة",       desc: "نقداً وبطاقة وإيصالات" },
-            { label: "تقارير وتحليلات",    desc: "رؤى يومية لتنمية أعمالك" },
+            { label: "طلبات ذكية", desc: "إدارة الطلبات في الوقت الفعلي" },
+            { label: "إدارة الطاولات", desc: "تتبع وإدارة طاولاتك" },
+            { label: "مدفوعات سهلة", desc: "نقداً وبطاقة وإيصالات" },
+            { label: "تقارير وتحليلات", desc: "رؤى يومية لتنمية أعمالك" },
         ],
         demo: {
             title: "شاهد Servix في العمل",
@@ -129,22 +129,22 @@ const T = {
             title: "أسعار بسيطة وشفافة",
             desc: "اختر الخطة المناسبة لمطعمك",
             plans: {
-                trial:   { title: "تجربة مجانية",  subtitle: "جرب جميع المميزات مجاناً لمدة 7 أيام", price: "7 أيام", priceSub: "مجاناً", btn: "ابدأ التجربة المجانية" },
-                monthly: { title: "خطة شهرية",    subtitle: "مثالية للمطاعم النامية",                  btn: "ابدأ الخطة الشهرية" },
-                yearly:  { title: "خطة سنوية",    subtitle: "أفضل قيمة لأعمالك",                        btn: "ابدأ الخطة السنوية", badge: "الأفضل قيمة" },
+                trial: { title: "تجربة مجانية", subtitle: "جرب جميع المميزات مجاناً لمدة 7 أيام", price: "7 أيام", priceSub: "مجاناً", btn: "ابدأ التجربة المجانية" },
+                monthly: { title: "خطة شهرية", subtitle: "مثالية للمطاعم النامية", btn: "ابدأ الخطة الشهرية" },
+                yearly: { title: "خطة سنوية", subtitle: "أفضل قيمة لأعمالك", btn: "ابدأ الخطة السنوية", badge: "الأفضل قيمة" },
             },
             features: {
-                trial:   ["جميع المميزات مشمولة", "لا بطاقة ائتمانية مطلوبة", "إلغاء في أي وقت"],
+                trial: ["جميع المميزات مشمولة", "لا بطاقة ائتمانية مطلوبة", "إلغاء في أي وقت"],
                 monthly: ["جميع المميزات مشمولة", "دعم أولوي", "تحديثات منتظمة"],
-                yearly:  ["جميع المميزات مشمولة", "دعم أولوي", "وفر 20%", "تحديثات منتظمة"],
+                yearly: ["جميع المميزات مشمولة", "دعم أولوي", "وفر 20%", "تحديثات منتظمة"],
             },
             insteadOf: "بدلاً من",
         },
         stats: [
-            { value: "+500",   label: "مطعم يثق بنا" },
-            { value: "99.9%",  label: "وقت تشغيل وموثوقية" },
-            { value: "24/7",   label: "دعم العملاء" },
-            { value: "آمن",   label: "بياناتك في أمان" },
+            { value: "+500", label: "مطعم يثق بنا" },
+            { value: "99.9%", label: "وقت تشغيل وموثوقية" },
+            { value: "24/7", label: "دعم العملاء" },
+            { value: "آمن", label: "بياناتك في أمان" },
         ],
         register: {
             title: "أنشئ مطعمك",
@@ -210,13 +210,13 @@ export default function ServixLanding() {
     const currentUser = useQuery(api.users.getCurrentUser);
     const createRestaurant = useMutation(api.restaurants.createRestaurant);
 
-    const [step, setStep]         = useState<"landing" | "register">("landing");
-    const [form, setForm]         = useState({ restaurantName: "", slug: "", address: "", phone: "" });
-    const [loading, setLoading]   = useState(false);
-    const [lang, setLang]         = useState<Lang>("en");
+    const [step, setStep] = useState<"landing" | "register">("landing");
+    const [form, setForm] = useState({ restaurantName: "", slug: "", address: "", phone: "" });
+    const [loading, setLoading] = useState(false);
+    const [lang, setLang] = useState<Lang>("en");
     const [currency, setCurrency] = useState<Currency>("EGP");
 
-    const t   = T[lang];
+    const t = T[lang];
     const cur = CURRENCY_CONFIG[currency];
 
     const generateSlug = (name: string) =>
@@ -326,7 +326,7 @@ export default function ServixLanding() {
 
             {/* ── Hero ── */}
             <section className="max-w-7xl mx-auto px-8 pt-16 pb-8">
-                <div className="grid grid-cols-2 gap-12 items-center">
+                <div className="grid lg:grid-cols-2 md:grid-cols-1 gap-12 items-center">
                     {/* Left */}
                     <div>
                         <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5 mb-6">
@@ -392,7 +392,7 @@ export default function ServixLanding() {
                     </div>
 
                     {/* Right — POS mockup */}
-                    <div className="relative h-95">
+                    <div className="relative h-95 hidden md:block">
                         <div className="absolute inset-0 bg-linear-to-br from-indigo-50 via-purple-50 to-blue-50 rounded-3xl" />
                         <div className="absolute top-8 right-8 w-48 h-48 bg-indigo-200/30 rounded-full blur-3xl" />
                         <div className="absolute bottom-8 left-8 w-32 h-32 bg-purple-200/30 rounded-full blur-2xl" />
@@ -404,57 +404,57 @@ export default function ServixLanding() {
             </section>
 
             {/* ── Demo + Pricing ── */}
-            <section className="bg-neutral-50 border-y border-neutral-100 py-16">
-                <div className="max-w-7xl mx-auto px-8">
-                    <div className="grid grid-cols-5 gap-8">
+            <section className="bg-neutral-50 border-y border-neutral-100 py-12 sm:py-16">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
                         {/* Demo */}
-                        <div className="col-span-2">
-                            <h2 className="text-2xl font-black text-neutral-900 mb-1">{t.demo.title}</h2>
+                        <div className="lg:col-span-2">
+                            <h2 className="text-xl sm:text-2xl font-black text-neutral-900 mb-1">{t.demo.title}</h2>
                             <p className="text-sm text-neutral-500 mb-6">{t.demo.desc}</p>
                             <div className="relative aspect-video bg-neutral-900 rounded-2xl overflow-hidden flex items-center justify-center">
                                 <div className="text-center">
-                                    <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
-                                        <Play size={22} className="text-white ml-1" fill="white" />
+                                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                                        <Play size={18} className="text-white ml-0.5 sm:w-5 sm:h-5" fill="white" />
                                     </div>
-                                    <p className="text-white/60 text-xs font-medium">{t.demo.videoSoon}</p>
+                                    <p className="text-white/60 text-[10px] sm:text-xs font-medium">{t.demo.videoSoon}</p>
                                 </div>
-                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-1.5 flex items-center gap-2">
-                                    <Play size={10} className="text-white" fill="white" />
-                                    <span className="text-white text-[10px]">0:00 / 1:30</span>
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 sm:px-3 py-1 sm:py-1.5 flex items-center gap-2">
+                                    <Play size={8} className="text-white sm:w-2.5 sm:h-2.5" fill="white" />
+                                    <span className="text-white text-[8px] sm:text-[10px]">0:00 / 1:30</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Pricing */}
-                        <div className="col-span-3">
-                            <h2 className="text-2xl font-black text-neutral-900 mb-1 text-center">{t.pricing.title}</h2>
-                            <p className="text-sm text-neutral-500 mb-6 text-center">{t.pricing.desc}</p>
+                        <div className="lg:col-span-3">
+                            <h2 className="text-xl sm:text-2xl font-black text-neutral-900 mb-1 text-center">{t.pricing.title}</h2>
+                            <p className="text-sm text-neutral-500 mb-6 sm:mb-8 text-center">{t.pricing.desc}</p>
 
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                                 {/* Trial */}
-                                <div className="relative bg-white rounded-2xl border border-neutral-200 p-5 flex flex-col hover:shadow-sm transition-all">
+                                <div className="relative bg-white rounded-2xl border border-neutral-200 p-4 sm:p-5 flex flex-col hover:shadow-lg transition-all">
                                     <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-black mb-3">1</div>
                                     <p className="text-sm font-black text-neutral-900">{t.pricing.plans.trial.title}</p>
-                                    <p className="text-xs text-neutral-400 mt-0.5 mb-4">{t.pricing.plans.trial.subtitle}</p>
-                                    <div className="mb-4">
-                                        <span className="text-3xl font-black text-neutral-900">{t.pricing.plans.trial.price}</span>
-                                        <span className="text-sm text-neutral-500 ml-1">{t.pricing.plans.trial.priceSub}</span>
+                                    <p className="text-xs text-neutral-400 mt-0.5 mb-3 sm:mb-4">{t.pricing.plans.trial.subtitle}</p>
+                                    <div className="mb-3 sm:mb-4">
+                                        <span className="text-2xl sm:text-3xl font-black text-neutral-900">{t.pricing.plans.trial.price}</span>
+                                        <span className="text-xs sm:text-sm text-neutral-500 ml-1">{t.pricing.plans.trial.priceSub}</span>
                                     </div>
-                                    <ul className="space-y-2 flex-1 mb-5">
+                                    <ul className="space-y-2 flex-1 mb-4 sm:mb-5">
                                         {t.pricing.features.trial.map(f => (
                                             <li key={f} className="flex items-center gap-2 text-xs text-neutral-600">
-                                                <Check size={13} className="text-green-500 shrink-0" />{f}
+                                                <Check size={12} className="text-green-500 shrink-0" />{f}
                                             </li>
                                         ))}
                                     </ul>
                                     {isSignedIn ? (
                                         <button onClick={() => setStep("register")}
-                                            className="w-full py-2.5 rounded-xl text-xs font-bold border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                            className="w-full py-2 sm:py-2.5 rounded-xl text-xs font-bold border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-colors">
                                             {t.pricing.plans.trial.btn}
                                         </button>
                                     ) : (
                                         <SignUpButton mode="modal">
-                                            <button className="w-full py-2.5 rounded-xl text-xs font-bold border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                            <button className="w-full py-2 sm:py-2.5 rounded-xl text-xs font-bold border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-colors">
                                                 {t.pricing.plans.trial.btn}
                                             </button>
                                         </SignUpButton>
@@ -462,58 +462,56 @@ export default function ServixLanding() {
                                 </div>
 
                                 {/* Monthly */}
-                                <div className="relative bg-white rounded-2xl border border-neutral-200 p-5 flex flex-col hover:shadow-sm transition-all">
+                                <div className="relative bg-white rounded-2xl border border-neutral-200 p-4 sm:p-5 flex flex-col hover:shadow-lg transition-all">
                                     <div className="w-8 h-8 rounded-xl bg-green-100 text-green-600 flex items-center justify-center text-sm font-black mb-3">2</div>
                                     <p className="text-sm font-black text-neutral-900">{t.pricing.plans.monthly.title}</p>
-                                    <p className="text-xs text-neutral-400 mt-0.5 mb-4">{t.pricing.plans.monthly.subtitle}</p>
-                                    {/* ← Dynamic price */}
+                                    <p className="text-xs text-neutral-400 mt-0.5 mb-3 sm:mb-4">{t.pricing.plans.monthly.subtitle}</p>
                                     <div className="mb-1">
-                                        <span className="text-3xl font-black text-neutral-900">
+                                        <span className="text-2xl sm:text-3xl font-black text-neutral-900">
                                             {cur.symbol} {formatPrice(cur.monthly)}
                                         </span>
-                                        <span className="text-sm text-neutral-500 ml-1">/ {lang === "ar" ? "شهر" : "month"}</span>
+                                        <span className="text-xs sm:text-sm text-neutral-500 ml-1">/ {lang === "ar" ? "شهر" : "month"}</span>
                                     </div>
-                                    <p className="text-[11px] text-neutral-400 mb-4">
+                                    <p className="text-[10px] sm:text-[11px] text-neutral-400 mb-3 sm:mb-4">
                                         ({t.pricing.insteadOf} {cur.symbol} {formatPrice(cur.monthlyOld)})
                                     </p>
-                                    <ul className="space-y-2 flex-1 mb-5">
+                                    <ul className="space-y-2 flex-1 mb-4 sm:mb-5">
                                         {t.pricing.features.monthly.map(f => (
                                             <li key={f} className="flex items-center gap-2 text-xs text-neutral-600">
-                                                <Check size={13} className="text-green-500 shrink-0" />{f}
+                                                <Check size={12} className="text-green-500 shrink-0" />{f}
                                             </li>
                                         ))}
                                     </ul>
-                                    <button className="w-full py-2.5 rounded-xl text-xs font-bold border-2 border-green-500 text-green-600 hover:bg-green-50 transition-colors">
+                                    <button className="w-full py-2 sm:py-2.5 rounded-xl text-xs font-bold border-2 border-green-500 text-green-600 hover:bg-green-50 transition-colors">
                                         {t.pricing.plans.monthly.btn}
                                     </button>
                                 </div>
 
                                 {/* Yearly */}
-                                <div className="relative bg-white rounded-2xl border border-neutral-200 p-5 flex flex-col hover:shadow-sm transition-all">
-                                    <div className="absolute -top-3 -right-3 bg-orange-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg rotate-12 shadow-sm">
+                                <div className="relative bg-white rounded-2xl border border-neutral-200 p-4 sm:p-5 flex flex-col hover:shadow-lg transition-all sm:col-span-2 lg:col-span-1">
+                                    <div className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 bg-orange-500 text-white text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg rotate-12 shadow-sm">
                                         {t.pricing.plans.yearly.badge}
                                     </div>
                                     <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center text-sm font-black mb-3">3</div>
                                     <p className="text-sm font-black text-neutral-900">{t.pricing.plans.yearly.title}</p>
-                                    <p className="text-xs text-neutral-400 mt-0.5 mb-4">{t.pricing.plans.yearly.subtitle}</p>
-                                    {/* ← Dynamic price */}
+                                    <p className="text-xs text-neutral-400 mt-0.5 mb-3 sm:mb-4">{t.pricing.plans.yearly.subtitle}</p>
                                     <div className="mb-1">
-                                        <span className="text-3xl font-black text-neutral-900">
+                                        <span className="text-2xl sm:text-3xl font-black text-neutral-900">
                                             {cur.symbol} {formatPrice(cur.yearly)}
                                         </span>
-                                        <span className="text-sm text-neutral-500 ml-1">/ {lang === "ar" ? "سنة" : "year"}</span>
+                                        <span className="text-xs sm:text-sm text-neutral-500 ml-1">/ {lang === "ar" ? "سنة" : "year"}</span>
                                     </div>
-                                    <p className="text-[11px] text-neutral-400 mb-4">
+                                    <p className="text-[10px] sm:text-[11px] text-neutral-400 mb-3 sm:mb-4">
                                         ({t.pricing.insteadOf} {cur.symbol} {formatPrice(cur.yearlyOld)})
                                     </p>
-                                    <ul className="space-y-2 flex-1 mb-5">
+                                    <ul className="space-y-2 flex-1 mb-4 sm:mb-5">
                                         {t.pricing.features.yearly.map(f => (
                                             <li key={f} className="flex items-center gap-2 text-xs text-neutral-600">
-                                                <Check size={13} className="text-green-500 shrink-0" />{f}
+                                                <Check size={12} className="text-green-500 shrink-0" />{f}
                                             </li>
                                         ))}
                                     </ul>
-                                    <button className="w-full py-2.5 rounded-xl text-xs font-bold border-2 border-orange-400 text-orange-500 hover:bg-orange-50 transition-colors">
+                                    <button className="w-full py-2 sm:py-2.5 rounded-xl text-xs font-bold border-2 border-orange-400 text-orange-500 hover:bg-orange-50 transition-colors">
                                         {t.pricing.plans.yearly.btn}
                                     </button>
                                 </div>

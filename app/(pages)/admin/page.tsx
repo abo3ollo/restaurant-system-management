@@ -231,7 +231,7 @@ export default function AdminDashboard() {
                         {restaurant && (
                             <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 px-2 sm:px-3 py-1.5 rounded-xl">
                                 <Store size={13} className="text-neutral-500 shrink-0" />
-                                <span className="text-xs font-bold text-neutral-700 truncate max-w-[100px] sm:max-w-none">
+                                <span className="text-xs font-bold text-neutral-700 truncate max-w-25 sm:max-w-none">
                                     {restaurant.name}
                                 </span>
                                 <span className={cn(
