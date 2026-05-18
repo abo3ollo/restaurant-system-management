@@ -12,8 +12,8 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "Foodics",
-  description: "A restaurant management system",
+  title: "Servix",
+  description: "Restaurant Pos & Saas System",
 };
 
 export default function RootLayout({

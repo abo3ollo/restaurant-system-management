@@ -286,7 +286,7 @@ export default function ServixLanding() {
                         <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm">
                             <span className="text-white font-black text-sm">S</span>
                         </div>
-                        <span className="text-xl font-black text-neutral-900 tracking-tight">servix</span>
+                        <span className="text-xl font-black text-neutral-900 tracking-tight">Servix</span>
                     </div>
 
 
@@ -620,7 +620,7 @@ export default function ServixLanding() {
                         <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
                             <span className="text-white font-black text-xs">S</span>
                         </div>
-                        <span className="font-black text-white">servix</span>
+                        <span className="font-black text-white">Servix</span>
                     </div>
                     <p className="text-xs text-neutral-400">{t.footer.rights}</p>
                     <div className="flex gap-5">
